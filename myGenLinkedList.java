@@ -1,4 +1,3 @@
-
 public class myGenLinkedList<T> {
 
 	private Node  head,tail;
