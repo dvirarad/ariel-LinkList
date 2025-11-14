@@ -7,6 +7,8 @@ let currentGameCleanup = null;
 // Audio system for Hebrew speech
 let speechSynth = window.speechSynthesis;
 let hebrewVoice = null;
+let speechRate = 0.75; // Default speech rate (can be adjusted in settings)
+let availableVoices = [];
 
 // Word images/emojis dictionary
 const wordImages = {
@@ -17,8 +19,10 @@ const wordImages = {
     'בית': '🏠',
     'דג': '🐟',
     'ילד': '👦',
+    'ילדה': '👧',
     'ספר': '📚',
-    'עט': '✏️',
+    'עט': '🖊️',
+    'עיפרון': '✏️',
     'תיק': '🎒',
     'כדור': '⚽',
     'פרח': '🌸',
@@ -54,7 +58,85 @@ const wordImages = {
     'נהג': '👨‍✈️',
     'נוסע': '🧑',
     'כרטיס': '🎫',
-    'מסילה': '🛤️'
+    'מסילה': '🛤️',
+    'שולחן': '🪑',
+    'כיסא': '🪑',
+    'דלת': '🚪',
+    'חלון': '🪟',
+    'מיטה': '🛏️',
+    'כרית': '🛏️',
+    'שמיכה': '🛌',
+    'משקפיים': '👓',
+    'כובע': '🧢',
+    'חולצה': '👕',
+    'מכנסיים': '👖',
+    'נעליים': '👟',
+    'גרביים': '🧦',
+    'שעון': '⏰',
+    'טלפון': '📱',
+    'מחשב': '💻',
+    'טלויזיה': '📺',
+    'רדיו': '📻',
+    'מצלמה': '📷',
+    'גיטרה': '🎸',
+    'תוף': '🥁',
+    'חליל': '🎺',
+    'פעמון': '🔔',
+    'לחם': '🍞',
+    'חלב': '🥛',
+    'גבינה': '🧀',
+    'ביצה': '🥚',
+    'עוגה': '🎂',
+    'עוגיה': '🍪',
+    'שוקולד': '🍫',
+    'ממתק': '🍬',
+    'גלידה': '🍦',
+    'מרק': '🍲',
+    'סלט': '🥗',
+    'כוס': '🥤',
+    'צלחת': '🍽️',
+    'כפית': '🥄',
+    'מזלג': '🍴',
+    'סכין': '🔪',
+    'שמיים': '☁️',
+    'עננים': '☁️',
+    'גשם': '🌧️',
+    'שלג': '❄️',
+    'רוח': '💨',
+    'קשת': '🌈',
+    'ים': '🌊',
+    'חוף': '🏖️',
+    'אוהל': '⛺',
+    'אש': '🔥',
+    'דשא': '🌱',
+    'פרפר': '🦋',
+    'דבורה': '🐝',
+    'נמלה': '🐜',
+    'חיפושית': '🐞',
+    'עכביש': '🕷️',
+    'צפרדע': '🐸',
+    'ארנב': '🐰',
+    'שועל': '🦊',
+    'דוב': '🐻',
+    'פנדה': '🐼',
+    'אריה': '🦁',
+    'נמר': '🐯',
+    'ג׳ירפה': '🦒',
+    'זברה': '🦓',
+    'קרנף': '🦏',
+    'היפו': '🦛',
+    'תנין': '🐊',
+    'נחש': '🐍',
+    'צב': '🐢',
+    'דולפין': '🐬',
+    'לוויתן': '🐋',
+    'כריש': '🦈',
+    'תמנון': '🐙',
+    'סרטן': '🦀',
+    'תרנגול': '🐔',
+    'אווז': '🦆',
+    'ינשוף': '🦉',
+    'יונה': '🕊️'
 };
 
 // Initialize the app
@@ -219,17 +301,33 @@ function getRandomItems(array, count) {
 
 // ===== AUDIO SYSTEM =====
 
-// Initialize Hebrew voice
+// Initialize Hebrew voice and load all available voices
 function initHebrewVoice() {
-    if (!hebrewVoice) {
-        const voices = speechSynth.getVoices();
+    availableVoices = speechSynth.getVoices();
+
+    if (availableVoices.length > 0 && !hebrewVoice) {
         // Try to find Hebrew voice, fallback to any voice
-        hebrewVoice = voices.find(voice => voice.lang.startsWith('he')) || voices[0];
+        hebrewVoice = availableVoices.find(voice => voice.lang.startsWith('he')) || availableVoices[0];
+    }
+
+    // Populate voice selector if it exists
+    const voiceSelect = document.getElementById('voice-select');
+    if (voiceSelect && availableVoices.length > 0) {
+        voiceSelect.innerHTML = '';
+        availableVoices.forEach((voice, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = `${voice.name} (${voice.lang})`;
+            if (voice === hebrewVoice) {
+                option.selected = true;
+            }
+            voiceSelect.appendChild(option);
+        });
     }
 }
 
 // Speak text in Hebrew
-function speakText(text, rate = 0.75) {
+function speakText(text, rate = null) {
     // Stop any current speech
     speechSynth.cancel();
 
@@ -240,7 +338,7 @@ function speakText(text, rate = 0.75) {
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'he-IL';
-    utterance.rate = rate; // Slower for kids to understand better
+    utterance.rate = rate !== null ? rate : speechRate; // Use custom rate or global setting
     utterance.pitch = 1.1; // Slightly higher pitch for friendliness
     utterance.volume = 1.0;
 
@@ -341,19 +439,82 @@ function createWordDisplay(word, showImage = true, showSpeaker = true) {
     return container;
 }
 
+// ===== SETTINGS FUNCTIONS =====
+
+// Open settings modal
+function openSettings() {
+    const modal = document.getElementById('settings-modal');
+    modal.classList.remove('hidden');
+
+    // Update rate slider value display
+    const rateSlider = document.getElementById('speech-rate');
+    const rateValue = document.getElementById('rate-value');
+    rateSlider.value = speechRate;
+    rateValue.textContent = speechRate;
+
+    // Add listener for rate changes
+    rateSlider.oninput = function() {
+        speechRate = parseFloat(this.value);
+        rateValue.textContent = speechRate;
+    };
+
+    // Add listener for voice selection
+    const voiceSelect = document.getElementById('voice-select');
+    voiceSelect.onchange = function() {
+        hebrewVoice = availableVoices[this.value];
+    };
+}
+
+// Close settings modal
+function closeSettings() {
+    const modal = document.getElementById('settings-modal');
+    modal.classList.add('hidden');
+}
+
+// Test the current voice settings
+function testVoice() {
+    const testMessage = 'שלום נבו! זה בדיקה של הקול והמהירות';
+    speakText(testMessage);
+}
+
 // Load voices when they become available
 if (speechSynth.onvoiceschanged !== undefined) {
-    speechSynth.onvoiceschanged = initHebrewVoice;
+    speechSynth.onvoiceschanged = () => {
+        initHebrewVoice();
+        // Try playing welcome message after voices load
+        if (!window.welcomeMessagePlayed) {
+            playWelcomeMessage();
+        }
+    };
 }
 
 // Initialize on load
-setTimeout(initHebrewVoice, 100);
+setTimeout(() => {
+    initHebrewVoice();
+    // Setup settings panel
+    const rateSlider = document.getElementById('speech-rate');
+    const rateValue = document.getElementById('rate-value');
+    if (rateSlider) {
+        rateSlider.value = speechRate;
+        rateValue.textContent = speechRate;
+    }
+}, 100);
 
 // Welcome message for Nevo when page loads
-window.addEventListener('DOMContentLoaded', () => {
-    // Wait a bit for voices to load and for the page to be fully ready
+function playWelcomeMessage() {
+    if (window.welcomeMessagePlayed) return;
+    window.welcomeMessagePlayed = true;
+
+    const welcomeMessage = 'ברוך הבא נבו, האם מוכן לשחק וללמוד ביחד?';
+    // Use slower rate for welcome (0.65 is slower than the default 0.75)
     setTimeout(() => {
-        const welcomeMessage = 'ברוך הבא נבו, האם מוכן לשחק וללמוד ביחד?';
-        speakText(welcomeMessage, 0.7); // Extra slow for welcome message
-    }, 1000);
+        speakText(welcomeMessage, 0.65);
+    }, 500);
+}
+
+// Try to play welcome message when page loads
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        playWelcomeMessage();
+    }, 1500);
 });
