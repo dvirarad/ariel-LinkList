@@ -2,7 +2,7 @@
 let spaceCanvas, spaceCtx;
 let spaceship;
 let meteors = [];
-let stars = [];
+let spaceStars = [];
 let bullets = [];
 let currentSpaceLetter = null;
 let currentSpaceWord = '';
@@ -44,7 +44,7 @@ function initSpaceGame() {
     spaceGameRunning = true;
     meteors = [];
     bullets = [];
-    stars = [];
+    spaceStars = [];
 
     const gameContent = document.getElementById('game-content');
     gameContent.innerHTML = `
@@ -120,14 +120,17 @@ function initSpaceGame() {
     // Start new question
     nextSpaceQuestion();
 
+    // Register cleanup function
+    currentGameCleanup = cleanupSpaceGame;
+
     // Start game loop
     spaceGameLoop();
 }
 
 function createStars() {
-    stars = [];
+    spaceStars = [];
     for (let i = 0; i < 80; i++) {
-        stars.push({
+        spaceStars.push({
             x: Math.random() * spaceCanvas.width,
             y: Math.random() * spaceCanvas.height,
             size: Math.random() * 2 + 0.5,
@@ -232,7 +235,7 @@ function spaceGameLoop() {
     spaceCtx.clearRect(0, 0, spaceCanvas.width, spaceCanvas.height);
 
     // Draw and update stars
-    stars.forEach(star => {
+    spaceStars.forEach(star => {
         spaceCtx.fillStyle = `rgba(255, 255, 255, ${star.size / 3})`;
         spaceCtx.beginPath();
         spaceCtx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
@@ -444,3 +447,4 @@ function cleanupSpaceGame() {
         spaceCtx.clearRect(0, 0, spaceCanvas.width, spaceCanvas.height);
     }
 }
+

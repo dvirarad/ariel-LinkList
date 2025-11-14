@@ -17,7 +17,17 @@ let syllablesCorrect = 0;
 
 function initSyllablesGame() {
     syllablesCorrect = 0;
+
+    // Register cleanup function
+    currentGameCleanup = cleanupSyllablesGame;
+
     nextSyllableQuestion();
+}
+
+function cleanupSyllablesGame() {
+    // Reset game state
+    currentSyllableWord = null;
+    syllablesCorrect = 0;
 }
 
 function nextSyllableQuestion() {

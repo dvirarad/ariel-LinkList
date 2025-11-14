@@ -2,6 +2,7 @@
 let currentGame = null;
 let score = 0;
 let stars = 0;
+let currentGameCleanup = null;
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', () => {
@@ -47,11 +48,38 @@ function startGame(gameName) {
         case 'space':
             initSpaceGame();
             break;
+        case 'soccer':
+            initSoccerGame();
+            break;
+        case 'fishing':
+            initFishingGame();
+            break;
+        case 'zoo':
+            initZooGame();
+            break;
+        case 'balloons':
+            initBalloonsGame();
+            break;
+        case 'pizza':
+            initPizzaGame();
+            break;
+        case 'train':
+            initTrainGame();
+            break;
+        case 'airplane':
+            initAirplaneGame();
+            break;
     }
 }
 
 // Return to main menu
 function backToMenu() {
+    // Call cleanup function if it exists
+    if (currentGameCleanup && typeof currentGameCleanup === 'function') {
+        currentGameCleanup();
+        currentGameCleanup = null;
+    }
+
     currentGame = null;
     document.getElementById('game-menu').classList.remove('hidden');
     document.getElementById('game-container').classList.add('hidden');

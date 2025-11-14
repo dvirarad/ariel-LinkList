@@ -88,6 +88,9 @@ function initTractorGame() {
     document.addEventListener('keydown', handleTractorKeyDown);
     document.addEventListener('keyup', handleTractorKeyUp);
 
+    // Register cleanup function
+    currentGameCleanup = cleanupTractorGame;
+
     // Start game loop
     tractorGameLoop();
 }
@@ -398,17 +401,3 @@ function cleanupTractorGame() {
     keys = {};
 }
 
-// Update backToMenu function
-const originalBackToMenu2 = window.backToMenu;
-window.backToMenu = function() {
-    if (currentGame === 'tractor') {
-        cleanupTractorGame();
-    }
-    if (originalBackToMenu2.name !== 'backToMenu') {
-        originalBackToMenu2();
-    } else {
-        currentGame = null;
-        document.getElementById('game-menu').classList.remove('hidden');
-        document.getElementById('game-container').classList.add('hidden');
-    }
-};

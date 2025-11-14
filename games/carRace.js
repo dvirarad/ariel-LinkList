@@ -101,6 +101,9 @@ function initCarRaceGame() {
     // Initialize rival cars
     initRivalCars();
 
+    // Register cleanup function
+    currentGameCleanup = cleanupCarRace;
+
     // Start the game loop
     nextRaceQuestion();
     gameLoop();
@@ -353,18 +356,3 @@ function cleanupCarRace() {
     }
     window.lastMilestone = null;
 }
-
-// Add cleanup on back button
-const originalBackToMenu = window.backToMenu;
-window.backToMenu = function() {
-    if (currentGame === 'carRace') {
-        cleanupCarRace();
-    }
-    if (typeof originalBackToMenu === 'function' && originalBackToMenu.name !== 'backToMenu') {
-        originalBackToMenu();
-    } else {
-        currentGame = null;
-        document.getElementById('game-menu').classList.remove('hidden');
-        document.getElementById('game-container').classList.add('hidden');
-    }
-};

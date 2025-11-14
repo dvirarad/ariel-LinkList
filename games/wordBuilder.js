@@ -23,7 +23,20 @@ let wordsCompleted = 0;
 
 function initWordBuilderGame() {
     wordsCompleted = 0;
+
+    // Register cleanup function
+    currentGameCleanup = cleanupWordBuilderGame;
+
     nextWordBuildQuestion();
+}
+
+function cleanupWordBuilderGame() {
+    // Reset game state
+    currentWord = null;
+    playerWord = [];
+    wordsCompleted = 0;
+    selectedLetterElement = null;
+    selectedLetter = null;
 }
 
 function nextWordBuildQuestion() {

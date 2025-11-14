@@ -18,7 +18,17 @@ let correctAnswers = 0;
 
 function initLettersGame() {
     correctAnswers = 0;
+
+    // Register cleanup function
+    currentGameCleanup = cleanupLettersGame;
+
     nextLetterQuestion();
+}
+
+function cleanupLettersGame() {
+    // Reset game state
+    currentLetter = null;
+    correctAnswers = 0;
 }
 
 function nextLetterQuestion() {

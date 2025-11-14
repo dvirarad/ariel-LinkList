@@ -6,6 +6,10 @@ let drawingsCompleted = 0;
 
 function initWritingGame() {
     drawingsCompleted = 0;
+
+    // Register cleanup function
+    currentGameCleanup = cleanupWritingGame;
+
     setupWritingCanvas();
 }
 
@@ -94,4 +98,24 @@ function nextLetter() {
     setTimeout(() => {
         setupWritingCanvas();
     }, 1000);
+}
+
+function cleanupWritingGame() {
+    // Remove event listeners if canvas exists
+    if (canvas) {
+        canvas.removeEventListener('mousedown', startDrawing);
+        canvas.removeEventListener('mousemove', draw);
+        canvas.removeEventListener('mouseup', stopDrawing);
+        canvas.removeEventListener('mouseout', stopDrawing);
+        canvas.removeEventListener('touchstart', handleTouch);
+        canvas.removeEventListener('touchmove', handleTouch);
+        canvas.removeEventListener('touchend', stopDrawing);
+    }
+
+    // Reset game state
+    canvas = null;
+    ctx = null;
+    isDrawing = false;
+    currentWritingLetter = null;
+    drawingsCompleted = 0;
 }

@@ -13,6 +13,9 @@ function initMemoryGame() {
     matchedPairs = 0;
     flippedCards = [];
 
+    // Register cleanup function
+    currentGameCleanup = cleanupMemoryGame;
+
     // Select 8 words and duplicate them
     const selectedWords = getRandomItems(memoryWords, 8);
     memoryCards = shuffleArray([...selectedWords, ...selectedWords]);
@@ -92,4 +95,12 @@ function checkMatch() {
             canFlip = true;
         }, 1000);
     }
+}
+
+function cleanupMemoryGame() {
+    // Reset game state
+    memoryCards = [];
+    flippedCards = [];
+    matchedPairs = 0;
+    canFlip = true;
 }

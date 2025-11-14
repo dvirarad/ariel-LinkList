@@ -29,7 +29,17 @@ let soundsCorrect = 0;
 
 function initSoundsGame() {
     soundsCorrect = 0;
+
+    // Register cleanup function
+    currentGameCleanup = cleanupSoundsGame;
+
     nextSoundQuestion();
+}
+
+function cleanupSoundsGame() {
+    // Reset game state
+    currentSound = null;
+    soundsCorrect = 0;
 }
 
 function nextSoundQuestion() {
