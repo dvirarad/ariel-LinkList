@@ -229,7 +229,7 @@ function initHebrewVoice() {
 }
 
 // Speak text in Hebrew
-function speakText(text, rate = 0.9) {
+function speakText(text, rate = 0.75) {
     // Stop any current speech
     speechSynth.cancel();
 
@@ -240,7 +240,7 @@ function speakText(text, rate = 0.9) {
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'he-IL';
-    utterance.rate = rate; // Slightly slower for kids
+    utterance.rate = rate; // Slower for kids to understand better
     utterance.pitch = 1.1; // Slightly higher pitch for friendliness
     utterance.volume = 1.0;
 
@@ -348,3 +348,12 @@ if (speechSynth.onvoiceschanged !== undefined) {
 
 // Initialize on load
 setTimeout(initHebrewVoice, 100);
+
+// Welcome message for Nevo when page loads
+window.addEventListener('DOMContentLoaded', () => {
+    // Wait a bit for voices to load and for the page to be fully ready
+    setTimeout(() => {
+        const welcomeMessage = 'ברוך הבא נבו, האם מוכן לשחק וללמוד ביחד?';
+        speakText(welcomeMessage, 0.7); // Extra slow for welcome message
+    }, 1000);
+});
