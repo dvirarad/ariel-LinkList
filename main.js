@@ -38,6 +38,15 @@ function startGame(gameName) {
         case 'sounds':
             initSoundsGame();
             break;
+        case 'carRace':
+            initCarRaceGame();
+            break;
+        case 'tractor':
+            initTractorGame();
+            break;
+        case 'space':
+            initSpaceGame();
+            break;
     }
 }
 
