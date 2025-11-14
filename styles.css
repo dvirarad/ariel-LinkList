@@ -440,6 +440,41 @@ header {
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
+.fun-button {
+    position: fixed;
+    top: 90px;
+    right: 20px;
+    background: linear-gradient(135deg, #ffd93d 0%, #ff9a9e 100%);
+    border: none;
+    font-size: 2em;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    z-index: 100;
+    animation: wiggle 2s ease-in-out infinite;
+}
+
+.fun-button:hover {
+    transform: scale(1.15);
+    box-shadow: 0 8px 25px rgba(255, 154, 158, 0.5);
+    animation: none;
+}
+
+@keyframes wiggle {
+    0%, 100% {
+        transform: rotate(0deg);
+    }
+    25% {
+        transform: rotate(-5deg);
+    }
+    75% {
+        transform: rotate(5deg);
+    }
+}
+
 .settings-modal {
     position: fixed;
     top: 0;

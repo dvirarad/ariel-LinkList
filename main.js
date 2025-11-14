@@ -439,6 +439,40 @@ function createWordDisplay(word, showImage = true, showSpeaker = true) {
     return container;
 }
 
+// ===== FUN GREETINGS AND JOKES =====
+
+const funMessages = [
+    'ברוך הבא נבו! האם אתה מוכן לשחק וללמוד ביחד?',
+    'יש לי חידה בשבילך: מה עושה פיל בעץ? קוראים ביחד!',
+    'כל הכבוד נבו! אתה לומד מצוין!',
+    'למה העיפרון הלך לישון? כי הוא היה עייף מלכתוב!',
+    'נבו המלך! אתה הכי חכם בעולם!',
+    'למה הספר הלך לרופא? כי היו לו הרבה עמודים כואבים!',
+    'וואו נבו! אתה גיבור אמיתי של הקריאה!',
+    'מה האות האהובה על הדג? אות דגש! חה חה חה!',
+    'נבו, אתה כוכב! תמשיך לשחק וללמוד!',
+    'למה המילה הלכה לים? כי היא רצתה לגלוש על המשפטים!'
+];
+
+// Play random greeting or joke
+function playRandomGreeting() {
+    const randomIndex = Math.floor(Math.random() * funMessages.length);
+    const message = funMessages[randomIndex];
+
+    // Animate the button
+    const funButton = document.getElementById('fun-button');
+    funButton.style.animation = 'none';
+    setTimeout(() => {
+        funButton.style.animation = 'pulse 0.6s ease';
+    }, 10);
+    setTimeout(() => {
+        funButton.style.animation = 'wiggle 2s ease-in-out infinite';
+    }, 600);
+
+    // Speak the message
+    speakText(message, 0.7);
+}
+
 // ===== SETTINGS FUNCTIONS =====
 
 // Open settings modal
@@ -479,13 +513,7 @@ function testVoice() {
 
 // Load voices when they become available
 if (speechSynth.onvoiceschanged !== undefined) {
-    speechSynth.onvoiceschanged = () => {
-        initHebrewVoice();
-        // Try playing welcome message after voices load
-        if (!window.welcomeMessagePlayed) {
-            playWelcomeMessage();
-        }
-    };
+    speechSynth.onvoiceschanged = initHebrewVoice;
 }
 
 // Initialize on load
@@ -499,22 +527,3 @@ setTimeout(() => {
         rateValue.textContent = speechRate;
     }
 }, 100);
-
-// Welcome message for Nevo when page loads
-function playWelcomeMessage() {
-    if (window.welcomeMessagePlayed) return;
-    window.welcomeMessagePlayed = true;
-
-    const welcomeMessage = 'ברוך הבא נבו, האם מוכן לשחק וללמוד ביחד?';
-    // Use slower rate for welcome (0.65 is slower than the default 0.75)
-    setTimeout(() => {
-        speakText(welcomeMessage, 0.65);
-    }, 500);
-}
-
-// Try to play welcome message when page loads
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        playWelcomeMessage();
-    }, 1500);
-});
