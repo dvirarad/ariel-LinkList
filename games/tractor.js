@@ -30,9 +30,10 @@ function initTractorGame() {
                         border-radius: 15px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
 
                 <div style="background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                    <div style="font-size: 1.5em; color: #667eea; font-weight: bold;">
-                        אסוף את המילה: <span id="target-word" style="color: #ff6b6b; font-size: 1.3em;"></span>
+                    <div style="font-size: 1.5em; color: #667eea; font-weight: bold; margin-bottom: 10px;">
+                        אסוף את המילה:
                     </div>
+                    <div id="target-word-display" style="display: flex; align-items: center; justify-content: center; margin: 10px 0;"></div>
                     <div style="font-size: 1.8em; margin-top: 10px; direction: rtl;">
                         אותיות שנאספו: <span id="collected-letters" style="color: #51cf66; font-weight: bold;">___</span>
                     </div>
@@ -99,7 +100,16 @@ function nextTractorWord() {
     targetWord = tractorWords[Math.floor(Math.random() * tractorWords.length)];
     collectedLetters = [];
 
-    document.getElementById('target-word').textContent = targetWord;
+    // Display word with image and speaker
+    const targetWordDisplay = document.getElementById('target-word-display');
+    targetWordDisplay.innerHTML = '';
+    const wordElement = createWordDisplay(targetWord, true, true);
+    wordElement.style.fontSize = '1.8em';
+    targetWordDisplay.appendChild(wordElement);
+
+    // Auto-play the word
+    setTimeout(() => speakText(`אסוף את המילה ${targetWord}`), 300);
+
     updateCollectedDisplay();
 
     // Place letters on field

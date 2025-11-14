@@ -33,9 +33,10 @@ function initTrainGame() {
 
                 <div style="background: rgba(255,255,255,0.95); padding: 15px; border-radius: 10px;
                            margin-bottom: 15px; border: 3px solid #667eea;">
-                    <div style="font-size: 1.8em; color: #667eea; font-weight: bold;">
-                        בנה את המילה: <span id="train-target-word" style="color: #ff6b6b; font-size: 1.3em;"></span>
+                    <div style="font-size: 1.8em; color: #667eea; font-weight: bold; margin-bottom: 10px;">
+                        בנה את המילה:
                     </div>
+                    <div id="train-target-word" style="display: flex; align-items: center; justify-content: center; margin: 10px 0;"></div>
                     <div style="font-size: 1.3em; margin-top: 10px; color: #666;">
                         סדר את הקרונות לפי הסדר הנכון!
                     </div>
@@ -138,7 +139,15 @@ function nextTrainWord() {
     targetTrainWord = trainWords[Math.floor(Math.random() * trainWords.length)];
     trainCars = [];
 
-    document.getElementById('train-target-word').textContent = targetTrainWord;
+    // Display word with image and speaker
+    const targetDisplay = document.getElementById('train-target-word');
+    targetDisplay.innerHTML = '';
+    const wordElement = createWordDisplay(targetTrainWord, true, true);
+    wordElement.style.fontSize = '1.5em';
+    targetDisplay.appendChild(wordElement);
+
+    // Auto-play the word
+    setTimeout(() => speakText(`בנה את המילה ${targetTrainWord}`), 300);
 
     // Create available letters
     const wordLetters = targetTrainWord.split('');

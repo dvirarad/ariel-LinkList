@@ -33,15 +33,28 @@ function cleanupLettersGame() {
 
 function nextLetterQuestion() {
     currentLetter = hebrewLetters[Math.floor(Math.random() * hebrewLetters.length)];
+    const letterName = letterNames[currentLetter];
+    const questionText = `מצא את האות ${letterName}`;
 
     const gameContent = document.getElementById('game-content');
     gameContent.innerHTML = `
-        <h2 class="question-text">מצא את האות: ${letterNames[currentLetter]}</h2>
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h2 class="question-text" style="display: inline-block; margin: 0;">מצא את האות: ${letterName}</h2>
+            <div id="question-speaker" style="display: inline-block; margin: 0 15px;"></div>
+        </div>
         <div class="options-container" id="letter-options"></div>
         <div style="text-align: center; margin-top: 30px; font-size: 1.5em; color: #667eea;">
             <strong>תשובות נכונות: ${correctAnswers} ⭐</strong>
         </div>
     `;
+
+    // Add speaker button for question
+    const speakerContainer = document.getElementById('question-speaker');
+    const speakerBtn = createSpeakerButton(questionText, '2em');
+    speakerContainer.appendChild(speakerBtn);
+
+    // Auto-play question
+    setTimeout(() => speakText(questionText), 300);
 
     // Create options
     const wrongLetters = hebrewLetters.filter(l => l !== currentLetter);

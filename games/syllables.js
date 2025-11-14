@@ -35,12 +35,23 @@ function nextSyllableQuestion() {
 
     const gameContent = document.getElementById('game-content');
     gameContent.innerHTML = `
-        <h2 class="question-text">איך מחלקים את המילה: <span style="color: #ff6b6b;">${currentSyllableWord.word}</span></h2>
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h2 class="question-text" style="display: inline-block; margin: 0;">איך מחלקים את המילה:</h2>
+            <div id="word-speaker" style="display: inline-flex; align-items: center; margin: 10px;"></div>
+        </div>
         <div class="options-container" id="syllable-options"></div>
         <div style="text-align: center; margin-top: 30px; font-size: 1.5em; color: #667eea;">
             <strong>תשובות נכונות: ${syllablesCorrect} 📖</strong>
         </div>
     `;
+
+    // Add word with image and speaker
+    const wordSpeaker = document.getElementById('word-speaker');
+    const wordDisplay = createWordDisplay(currentSyllableWord.word, true, true);
+    wordSpeaker.appendChild(wordDisplay);
+
+    // Auto-play the word
+    setTimeout(() => speakText(currentSyllableWord.word), 300);
 
     const optionsContainer = document.getElementById('syllable-options');
     const options = shuffleArray([...currentSyllableWord.syllables]);
@@ -48,7 +59,19 @@ function nextSyllableQuestion() {
     options.forEach(syllable => {
         const syllableDiv = document.createElement('div');
         syllableDiv.className = 'syllable-option';
-        syllableDiv.textContent = syllable;
+        syllableDiv.style.cssText = 'display: flex; align-items: center; justify-content: center; gap: 10px;';
+
+        // Add syllable text
+        const textSpan = document.createElement('span');
+        textSpan.textContent = syllable;
+        textSpan.style.fontSize = '1.5em';
+        syllableDiv.appendChild(textSpan);
+
+        // Add small speaker button
+        const speakerBtn = createSpeakerButton(syllable.replace('-', ' '), '1em');
+        speakerBtn.style.margin = '0';
+        syllableDiv.appendChild(speakerBtn);
+
         syllableDiv.onclick = () => checkSyllableAnswer(syllable, syllableDiv);
         optionsContainer.appendChild(syllableDiv);
     });

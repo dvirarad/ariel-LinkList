@@ -46,7 +46,10 @@ function nextWordBuildQuestion() {
     const gameContent = document.getElementById('game-content');
     gameContent.innerHTML = `
         <div class="word-builder-container">
-            <h2 class="question-text">בנה את המילה: ${currentWord.word}</h2>
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h2 class="question-text" style="display: inline-block; margin: 0;">בנה את המילה:</h2>
+                <div id="word-display" style="display: inline-flex; align-items: center; margin: 10px;"></div>
+            </div>
             <div class="letter-slots" id="letter-slots"></div>
             <div class="available-letters" id="available-letters"></div>
             <div style="text-align: center; margin-top: 30px; font-size: 1.5em; color: #667eea;">
@@ -54,6 +57,14 @@ function nextWordBuildQuestion() {
             </div>
         </div>
     `;
+
+    // Add word with image and speaker
+    const wordDisplay = document.getElementById('word-display');
+    const wordElement = createWordDisplay(currentWord.word, true, true);
+    wordDisplay.appendChild(wordElement);
+
+    // Auto-play the word
+    setTimeout(() => speakText(currentWord.word), 300);
 
     // Create letter slots
     const slotsContainer = document.getElementById('letter-slots');

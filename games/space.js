@@ -144,8 +144,37 @@ function nextSpaceQuestion() {
     currentSpaceLetter = questionData.letter;
     currentSpaceWord = questionData.word;
 
-    document.getElementById('space-question').innerHTML =
-        `ירה על המטאור: <span style="color: #ffe66d; font-size: 1.3em;">${currentSpaceLetter}</span> (מתחיל את <span style="color: #51cf66;">${currentSpaceWord}</span>)`;
+    const questionText = `ירה על האות ${currentSpaceLetter} שמתחילה את המילה ${currentSpaceWord}`;
+    const questionContainer = document.getElementById('space-question');
+    questionContainer.innerHTML = '';
+
+    // Create question elements
+    const textDiv = document.createElement('div');
+    textDiv.style.cssText = 'display: inline-flex; align-items: center; gap: 10px;';
+
+    const questionSpan = document.createElement('span');
+    questionSpan.innerHTML = `ירה על המטאור: <span style="color: #ffe66d; font-size: 1.3em;">${currentSpaceLetter}</span> (מתחיל את `;
+    textDiv.appendChild(questionSpan);
+
+    const wordDisplay = createWordDisplay(currentSpaceWord, true, false);
+    wordDisplay.style.fontSize = '1em';
+    textDiv.appendChild(wordDisplay);
+
+    const closingSpan = document.createElement('span');
+    closingSpan.textContent = ')';
+    textDiv.appendChild(closingSpan);
+
+    questionContainer.appendChild(textDiv);
+
+    // Add speaker button for full question
+    const speakerDiv = document.createElement('div');
+    speakerDiv.style.cssText = 'display: inline-block; margin: 0 10px;';
+    const speakerBtn = createSpeakerButton(questionText, '1.3em');
+    speakerDiv.appendChild(speakerBtn);
+    questionContainer.appendChild(speakerDiv);
+
+    // Auto-play question
+    setTimeout(() => speakText(questionText), 300);
 
     // Create meteors
     createMeteors();

@@ -35,7 +35,31 @@ function initMemoryGame() {
         card.className = 'memory-card';
         card.dataset.word = word;
         card.dataset.index = index;
-        card.textContent = '?';
+
+        // Create card back (question mark)
+        const cardBack = document.createElement('div');
+        cardBack.className = 'card-back';
+        cardBack.textContent = '?';
+        cardBack.style.cssText = 'font-size: 3em; font-weight: bold; color: #667eea;';
+
+        // Create card front (word + image)
+        const cardFront = document.createElement('div');
+        cardFront.className = 'card-front';
+        cardFront.style.cssText = 'display: none; flex-direction: column; align-items: center; gap: 5px;';
+
+        const emoji = document.createElement('div');
+        emoji.textContent = getWordImage(word);
+        emoji.style.cssText = 'font-size: 2.5em;';
+
+        const wordText = document.createElement('div');
+        wordText.textContent = word;
+        wordText.style.cssText = 'font-size: 1.3em; font-weight: bold;';
+
+        cardFront.appendChild(emoji);
+        cardFront.appendChild(wordText);
+
+        card.appendChild(cardBack);
+        card.appendChild(cardFront);
         card.onclick = () => flipCard(card);
         grid.appendChild(card);
     });
@@ -47,7 +71,16 @@ function flipCard(card) {
     }
 
     card.classList.add('flipped');
-    card.textContent = card.dataset.word;
+
+    // Show front, hide back
+    const cardBack = card.querySelector('.card-back');
+    const cardFront = card.querySelector('.card-front');
+    cardBack.style.display = 'none';
+    cardFront.style.display = 'flex';
+
+    // Speak the word
+    speakText(card.dataset.word);
+
     flippedCards.push(card);
 
     if (flippedCards.length === 2) {
@@ -89,8 +122,18 @@ function checkMatch() {
         setTimeout(() => {
             card1.classList.remove('flipped');
             card2.classList.remove('flipped');
-            card1.textContent = '?';
-            card2.textContent = '?';
+
+            // Show back, hide front
+            const back1 = card1.querySelector('.card-back');
+            const front1 = card1.querySelector('.card-front');
+            const back2 = card2.querySelector('.card-back');
+            const front2 = card2.querySelector('.card-front');
+
+            back1.style.display = 'block';
+            front1.style.display = 'none';
+            back2.style.display = 'block';
+            front2.style.display = 'none';
+
             flippedCards = [];
             canFlip = true;
         }, 1000);
