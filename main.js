@@ -257,6 +257,7 @@ function createSpeakerButton(text, size = '1.5em') {
     button.innerHTML = '🔊';
     button.style.cssText = `
         font-size: ${size};
+        font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', 'Android Emoji', sans-serif;
         background: #667eea;
         color: white;
         border: none;
@@ -265,8 +266,14 @@ function createSpeakerButton(text, size = '1.5em') {
         height: 2.5em;
         cursor: pointer;
         margin: 0 5px;
+        padding: 0;
         transition: all 0.2s;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        vertical-align: middle;
+        line-height: 1;
     `;
 
     button.onmouseover = () => {
@@ -326,6 +333,7 @@ function createWordDisplay(word, showImage = true, showSpeaker = true) {
         imageSpan.style.cssText = `
             font-size: 1.8em;
             margin: 0 5px;
+            font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', 'Android Emoji', sans-serif;
         `;
         container.appendChild(imageSpan);
     }
