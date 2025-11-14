@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>משחקים לילדים - לומדים לקרוא ולכתוב!</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="main-title">🎮 משחקי קריאה וכתיבה 🎮</h1>
+            <p class="subtitle">בואו נלמד עברית בכיף!</p>
+        </header>
+
+        <div id="game-menu" class="game-menu">
+            <div class="game-card" onclick="startGame('letters')">
+                <div class="game-icon">🔤</div>
+                <h2>זיהוי אותיות</h2>
+                <p>לומדים להכיר את האותיות</p>
+            </div>
+
+            <div class="game-card" onclick="startGame('wordBuilder')">
+                <div class="game-icon">🧩</div>
+                <h2>בונים מילים</h2>
+                <p>מרכיבים מילים מאותיות</p>
+            </div>
+
+            <div class="game-card" onclick="startGame('memory')">
+                <div class="game-icon">🎴</div>
+                <h2>משחק זיכרון</h2>
+                <p>מוצאים זוגות של מילים</p>
+            </div>
+
+            <div class="game-card" onclick="startGame('syllables')">
+                <div class="game-icon">📖</div>
+                <h2>קוראים הברות</h2>
+                <p>מתאימים הברות למילים</p>
+            </div>
+
+            <div class="game-card" onclick="startGame('writing')">
+                <div class="game-icon">✏️</div>
+                <h2>כותבים אותיות</h2>
+                <p>מתרגלים לכתוב</p>
+            </div>
+
+            <div class="game-card" onclick="startGame('sounds')">
+                <div class="game-icon">🔊</div>
+                <h2>התאמת צלילים</h2>
+                <p>מתאימים אותיות לצלילים</p>
+            </div>
+        </div>
+
+        <div id="game-container" class="game-container hidden">
+            <button class="back-button" onclick="backToMenu()">🏠 חזרה לתפריט</button>
+            <div id="game-content"></div>
+        </div>
+
+        <div id="score-panel" class="score-panel">
+            <span>ניקוד: <span id="score">0</span></span>
+            <span>⭐ <span id="stars">0</span></span>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+    <script src="games/letters.js"></script>
+    <script src="games/wordBuilder.js"></script>
+    <script src="games/memory.js"></script>
+    <script src="games/syllables.js"></script>
+    <script src="games/writing.js"></script>
+    <script src="games/sounds.js"></script>
+</body>
+</html>
