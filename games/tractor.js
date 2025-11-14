@@ -105,14 +105,39 @@ function nextTractorWord() {
 
 function placeFieldLetters() {
     fieldLetters = [];
+    const minDistance = 120; // מרחק מינימלי בין אותיות
+
+    // Helper function to check if position is valid (not too close to existing letters)
+    function isValidPosition(x, y) {
+        for (let letter of fieldLetters) {
+            const distance = Math.sqrt(Math.pow(x - letter.x, 2) + Math.pow(y - letter.y, 2));
+            if (distance < minDistance) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Helper function to find valid position
+    function findValidPosition() {
+        let attempts = 0;
+        let x, y;
+        do {
+            x = 80 + Math.random() * (tractorCanvas.width - 160);
+            y = 80 + Math.random() * (tractorCanvas.height - 160);
+            attempts++;
+        } while (!isValidPosition(x, y) && attempts < 50);
+        return { x, y };
+    }
 
     // Add target word letters
     const wordLetters = targetWord.split('');
     wordLetters.forEach((letter, index) => {
+        const pos = findValidPosition();
         fieldLetters.push({
             letter: letter,
-            x: 100 + Math.random() * (tractorCanvas.width - 200),
-            y: 100 + Math.random() * (tractorCanvas.height - 200),
+            x: pos.x,
+            y: pos.y,
             size: 35,
             isTarget: true,
             targetIndex: index
@@ -121,12 +146,14 @@ function placeFieldLetters() {
 
     // Add some distractor letters
     const distractors = ['ק', 'ר', 'ש', 'ת', 'מ', 'נ', 'ה', 'ו'];
-    for (let i = 0; i < 5; i++) {
+    const numDistractors = Math.min(3, 8 - wordLetters.length); // פחות מסיחים אם המילה ארוכה
+    for (let i = 0; i < numDistractors; i++) {
         const distractor = distractors[Math.floor(Math.random() * distractors.length)];
+        const pos = findValidPosition();
         fieldLetters.push({
             letter: distractor,
-            x: 100 + Math.random() * (tractorCanvas.width - 200),
-            y: 100 + Math.random() * (tractorCanvas.height - 200),
+            x: pos.x,
+            y: pos.y,
             size: 35,
             isTarget: false
         });

@@ -2,12 +2,14 @@
 let carRaceCanvas, carRaceCtx;
 let playerCar, rivalCars = [];
 let currentRaceLetter = null;
-let carSpeed = 5;
+let carSpeed = 3;
 let raceDistance = 0;
 let raceScore = 0;
 let gameRunning = false;
 let animationId = null;
 let currentRaceQuestion = '';
+let roadOffset = 0;
+let canAnswer = true;
 
 const hebrewLettersRace = [
     'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י',
@@ -42,31 +44,43 @@ const raceWords = [
 function initCarRaceGame() {
     raceScore = 0;
     raceDistance = 0;
-    carSpeed = 5;
+    carSpeed = 3;
     gameRunning = true;
+    roadOffset = 0;
+    canAnswer = true;
 
     const gameContent = document.getElementById('game-content');
     gameContent.innerHTML = `
         <div style="text-align: center;">
             <h2 class="question-text">🏁 מרוץ האותיות! 🏁</h2>
+            <p style="font-size: 1.3em; color: #667eea; margin-bottom: 15px;">ענה נכון כדי להאיץ! הגע למטרה ראשון!</p>
+
             <div style="background: linear-gradient(to bottom, #87ceeb 0%, #98d8e8 50%, #4a4a4a 50%, #5a5a5a 100%);
                         border-radius: 15px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-                <canvas id="car-race-canvas" width="600" height="400"
-                        style="border: 4px solid #333; border-radius: 10px; background: linear-gradient(to bottom, #87ceeb 0%, #98d8e8 40%, #5a5a5a 40%, #6a6a6a 100%);"></canvas>
 
-                <div id="race-question" style="font-size: 2em; color: #fff; background: #667eea;
-                                               padding: 15px; border-radius: 10px; margin: 15px 0;
-                                               font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
+                <canvas id="car-race-canvas" width="600" height="400"
+                        style="border: 4px solid #333; border-radius: 10px; background: #5a5a5a;"></canvas>
+
+                <div id="race-question" style="font-size: 2.2em; color: #fff; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                               padding: 20px; border-radius: 15px; margin: 20px 0;
+                                               font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                                               border: 4px solid #ffe66d;">
                     איזו אות?
                 </div>
 
-                <div id="race-options" style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                <div id="race-options" style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin: 20px 0;">
                 </div>
 
-                <div style="display: flex; justify-content: space-around; margin-top: 20px; font-size: 1.3em; color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
-                    <div>🏎️ מהירות: <strong><span id="speed-display">5</span></strong></div>
-                    <div>📍 מרחק: <strong><span id="distance-display">0</span>מ'</strong></div>
-                    <div>🏆 ניקוד: <strong><span id="race-score">0</span></strong></div>
+                <div style="display: flex; justify-content: space-around; margin-top: 20px; font-size: 1.5em; color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); font-weight: bold;">
+                    <div style="background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 10px;">
+                        ⚡ מהירות: <span id="speed-display">3</span>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 10px;">
+                        📍 מרחק: <span id="distance-display">0</span>מ'
+                    </div>
+                    <div style="background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 10px;">
+                        🏆 ניקוד: <span id="race-score">0</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -78,7 +92,7 @@ function initCarRaceGame() {
     // Initialize player car
     playerCar = {
         x: carRaceCanvas.width / 2 - 25,
-        y: carRaceCanvas.height - 100,
+        y: carRaceCanvas.height - 120,
         width: 50,
         height: 80,
         color: '#ff6b6b'
@@ -94,14 +108,14 @@ function initCarRaceGame() {
 
 function initRivalCars() {
     rivalCars = [];
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 2; i++) {
         rivalCars.push({
-            x: 100 + (i * 200),
-            y: -100 - (i * 150),
+            x: 150 + (i * 250),
+            y: -100 - (i * 200),
             width: 50,
             height: 80,
-            speed: 3 + Math.random() * 2,
-            color: ['#4ecdc4', '#45b7d1', '#96ceb4'][i]
+            speed: 2 + Math.random(),
+            color: ['#4ecdc4', '#45b7d1'][i]
         });
     }
 }
@@ -110,9 +124,10 @@ function nextRaceQuestion() {
     const questionData = raceWords[Math.floor(Math.random() * raceWords.length)];
     currentRaceLetter = questionData.letter;
     currentRaceQuestion = questionData.word;
+    canAnswer = true;
 
     document.getElementById('race-question').innerHTML =
-        `באיזו אות מתחילה המילה: <span style="color: #ffe66d; font-size: 1.2em;">${currentRaceQuestion}</span>`;
+        `באיזו אות מתחילה: <span style="color: #ffe66d; font-size: 1.3em;">${currentRaceQuestion}</span> ❓`;
 
     // Create answer options
     const wrongLetters = hebrewLettersRace.filter(l => l !== currentRaceLetter);
@@ -129,18 +144,20 @@ function nextRaceQuestion() {
         btn.textContent = letter;
         btn.className = 'race-option-btn';
         btn.style.cssText = `
-            font-size: 2.5em;
-            padding: 20px 35px;
+            font-size: 3em;
+            padding: 20px 40px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border: none;
+            border: 3px solid #ffe66d;
             border-radius: 15px;
             cursor: pointer;
             font-weight: bold;
             transition: all 0.3s ease;
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         `;
-        btn.onmouseover = () => btn.style.transform = 'scale(1.1)';
+        btn.onmouseover = () => {
+            if (canAnswer) btn.style.transform = 'scale(1.15)';
+        };
         btn.onmouseout = () => btn.style.transform = 'scale(1)';
         btn.onclick = () => checkRaceAnswer(letter, btn);
         optionsContainer.appendChild(btn);
@@ -148,39 +165,41 @@ function nextRaceQuestion() {
 }
 
 function checkRaceAnswer(selectedLetter, btn) {
-    if (!gameRunning) return;
+    if (!gameRunning || !canAnswer) return;
 
+    canAnswer = false;
     const allBtns = document.querySelectorAll('.race-option-btn');
-    allBtns.forEach(b => b.disabled = true);
+    allBtns.forEach(b => b.style.pointerEvents = 'none');
 
     if (selectedLetter === currentRaceLetter) {
         // Correct answer - speed up!
         btn.style.background = '#51cf66';
-        carSpeed += 2;
+        btn.style.border = '3px solid #40c057';
+        carSpeed = Math.min(8, carSpeed + 1.5);
         raceScore += 10;
         updateScore(10);
         updateStars(1);
 
-        // Show boost effect
-        showBoostEffect('⚡ מהירות! ⚡');
+        showBoostEffect('⚡ כל הכבוד! מהירות! ⚡');
 
         setTimeout(() => {
             nextRaceQuestion();
-        }, 1000);
+        }, 1200);
     } else {
         // Wrong answer - slow down
         btn.style.background = '#ff6b6b';
-        carSpeed = Math.max(2, carSpeed - 1);
+        btn.style.border = '3px solid #ff5252';
+        carSpeed = Math.max(1.5, carSpeed - 0.8);
 
-        showBoostEffect('😅 האט!');
+        showBoostEffect('🐌 אופס! האטה...');
 
         setTimeout(() => {
-            btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-            allBtns.forEach(b => b.disabled = false);
-        }, 1000);
+            canAnswer = true;
+            allBtns.forEach(b => b.style.pointerEvents = 'auto');
+        }, 1200);
     }
 
-    document.getElementById('speed-display').textContent = carSpeed;
+    document.getElementById('speed-display').textContent = Math.floor(carSpeed);
     document.getElementById('race-score').textContent = raceScore;
 }
 
@@ -189,18 +208,22 @@ function showBoostEffect(text) {
     effect.textContent = text;
     effect.style.cssText = `
         position: fixed;
-        top: 50%;
+        top: 35%;
         left: 50%;
         transform: translate(-50%, -50%);
-        font-size: 3em;
-        color: #ffe66d;
+        font-size: 2.5em;
+        color: white;
         font-weight: bold;
+        background: rgba(0,0,0,0.8);
+        padding: 20px 40px;
+        border-radius: 15px;
         text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
         z-index: 1000;
-        animation: fadeInOut 1s ease;
+        animation: fadeInOut 1.2s ease;
+        border: 3px solid #ffe66d;
     `;
     document.body.appendChild(effect);
-    setTimeout(() => effect.remove(), 1000);
+    setTimeout(() => effect.remove(), 1200);
 }
 
 function gameLoop() {
@@ -209,62 +232,116 @@ function gameLoop() {
     // Clear canvas
     carRaceCtx.clearRect(0, 0, carRaceCanvas.width, carRaceCanvas.height);
 
-    // Draw road lines
+    // Draw background
+    carRaceCtx.fillStyle = '#5a5a5a';
+    carRaceCtx.fillRect(0, 0, carRaceCanvas.width, carRaceCanvas.height);
+
+    // Draw road lines with animation
+    roadOffset += carSpeed;
+    if (roadOffset > 40) roadOffset = 0;
+
     drawRoadLines();
 
     // Update and draw rival cars
     rivalCars.forEach(car => {
-        car.y += carSpeed * 0.8;
+        car.y += carSpeed * 1.2;
         if (car.y > carRaceCanvas.height) {
-            car.y = -car.height;
-            car.x = 50 + Math.random() * (carRaceCanvas.width - 100);
+            car.y = -car.height - 100;
+            car.x = 100 + Math.random() * (carRaceCanvas.width - 200);
         }
         drawCar(car.x, car.y, car.width, car.height, car.color);
     });
 
-    // Draw player car
-    drawCar(playerCar.x, playerCar.y, playerCar.width, playerCar.height, playerCar.color, true);
+    // Draw player car (with bounce effect)
+    const bounce = Math.sin(Date.now() / 100) * 3;
+    drawCar(playerCar.x, playerCar.y + bounce, playerCar.width, playerCar.height, playerCar.color, true);
 
     // Update distance
-    raceDistance += carSpeed * 0.1;
+    raceDistance += carSpeed * 0.15;
     document.getElementById('distance-display').textContent = Math.floor(raceDistance);
+
+    // Check milestones
+    if (Math.floor(raceDistance) % 100 === 0 && Math.floor(raceDistance) > 0) {
+        if (!window.lastMilestone || window.lastMilestone !== Math.floor(raceDistance)) {
+            window.lastMilestone = Math.floor(raceDistance);
+            celebrate();
+        }
+    }
 
     animationId = requestAnimationFrame(gameLoop);
 }
 
 function drawRoadLines() {
     carRaceCtx.strokeStyle = '#fff';
-    carRaceCtx.lineWidth = 4;
-    carRaceCtx.setLineDash([20, 15]);
+    carRaceCtx.lineWidth = 5;
+    carRaceCtx.setLineDash([30, 20]);
+    carRaceCtx.lineDashOffset = -roadOffset;
+
+    // Center line
     carRaceCtx.beginPath();
     carRaceCtx.moveTo(carRaceCanvas.width / 2, 0);
     carRaceCtx.lineTo(carRaceCanvas.width / 2, carRaceCanvas.height);
     carRaceCtx.stroke();
+
+    // Side lines
+    carRaceCtx.strokeStyle = '#ffe66d';
+    carRaceCtx.lineWidth = 4;
+    carRaceCtx.setLineDash([]);
+
+    carRaceCtx.beginPath();
+    carRaceCtx.moveTo(50, 0);
+    carRaceCtx.lineTo(50, carRaceCanvas.height);
+    carRaceCtx.stroke();
+
+    carRaceCtx.beginPath();
+    carRaceCtx.moveTo(carRaceCanvas.width - 50, 0);
+    carRaceCtx.lineTo(carRaceCanvas.width - 50, carRaceCanvas.height);
+    carRaceCtx.stroke();
+
     carRaceCtx.setLineDash([]);
 }
 
 function drawCar(x, y, width, height, color, isPlayer = false) {
+    // Car shadow
+    carRaceCtx.fillStyle = 'rgba(0,0,0,0.3)';
+    carRaceCtx.fillRect(x + 5, y + 5, width, height);
+
     // Car body
     carRaceCtx.fillStyle = color;
     carRaceCtx.fillRect(x, y, width, height);
 
     // Car windows
     carRaceCtx.fillStyle = '#4a90e2';
-    carRaceCtx.fillRect(x + 5, y + 10, width - 10, height * 0.3);
+    carRaceCtx.fillRect(x + 8, y + 15, width - 16, height * 0.25);
 
     // Wheels
-    carRaceCtx.fillStyle = '#333';
-    carRaceCtx.fillRect(x - 5, y + 15, 8, 15);
-    carRaceCtx.fillRect(x + width - 3, y + 15, 8, 15);
-    carRaceCtx.fillRect(x - 5, y + height - 30, 8, 15);
-    carRaceCtx.fillRect(x + width - 3, y + height - 30, 8, 15);
+    carRaceCtx.fillStyle = '#222';
+    carRaceCtx.fillRect(x - 3, y + 20, 8, 16);
+    carRaceCtx.fillRect(x + width - 5, y + 20, 8, 16);
+    carRaceCtx.fillRect(x - 3, y + height - 36, 8, 16);
+    carRaceCtx.fillRect(x + width - 5, y + height - 36, 8, 16);
 
     // Player indicator
     if (isPlayer) {
         carRaceCtx.fillStyle = '#ffe66d';
-        carRaceCtx.font = 'bold 24px Arial';
+        carRaceCtx.font = 'bold 30px Arial';
         carRaceCtx.textAlign = 'center';
         carRaceCtx.fillText('⭐', x + width / 2, y - 10);
+
+        // Speed lines
+        for (let i = 0; i < 3; i++) {
+            carRaceCtx.strokeStyle = `rgba(255, 230, 109, ${0.5 - i * 0.15})`;
+            carRaceCtx.lineWidth = 3;
+            carRaceCtx.beginPath();
+            carRaceCtx.moveTo(x - 10 - (i * 8), y + 20 + (i * 10));
+            carRaceCtx.lineTo(x - 20 - (i * 8), y + 25 + (i * 10));
+            carRaceCtx.stroke();
+
+            carRaceCtx.beginPath();
+            carRaceCtx.moveTo(x + width + 10 + (i * 8), y + 20 + (i * 10));
+            carRaceCtx.lineTo(x + width + 20 + (i * 8), y + 25 + (i * 10));
+            carRaceCtx.stroke();
+        }
     }
 }
 
@@ -274,6 +351,7 @@ function cleanupCarRace() {
     if (animationId) {
         cancelAnimationFrame(animationId);
     }
+    window.lastMilestone = null;
 }
 
 // Add cleanup on back button
@@ -282,5 +360,11 @@ window.backToMenu = function() {
     if (currentGame === 'carRace') {
         cleanupCarRace();
     }
-    originalBackToMenu();
+    if (typeof originalBackToMenu === 'function' && originalBackToMenu.name !== 'backToMenu') {
+        originalBackToMenu();
+    } else {
+        currentGame = null;
+        document.getElementById('game-menu').classList.remove('hidden');
+        document.getElementById('game-container').classList.add('hidden');
+    }
 };
