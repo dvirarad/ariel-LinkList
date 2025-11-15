@@ -331,9 +331,14 @@ function speakText(text, rate = null) {
     // Stop any current speech
     speechSynth.cancel();
 
+    // Make sure voices are loaded
+    if (availableVoices.length === 0) {
+        availableVoices = speechSynth.getVoices();
+    }
+
     // Initialize voice if needed
-    if (!hebrewVoice) {
-        initHebrewVoice();
+    if (!hebrewVoice && availableVoices.length > 0) {
+        hebrewVoice = availableVoices.find(voice => voice.lang.startsWith('he')) || availableVoices[0];
     }
 
     const utterance = new SpeechSynthesisUtterance(text);
@@ -517,8 +522,14 @@ if (speechSynth.onvoiceschanged !== undefined) {
 }
 
 // Initialize on load
-setTimeout(() => {
+window.addEventListener('DOMContentLoaded', () => {
+    // Try to load voices immediately
     initHebrewVoice();
+
+    // Try again after a delay (for browsers that load voices asynchronously)
+    setTimeout(initHebrewVoice, 100);
+    setTimeout(initHebrewVoice, 500);
+
     // Setup settings panel
     const rateSlider = document.getElementById('speech-rate');
     const rateValue = document.getElementById('rate-value');
@@ -526,4 +537,4 @@ setTimeout(() => {
         rateSlider.value = speechRate;
         rateValue.textContent = speechRate;
     }
-}, 100);
+});
