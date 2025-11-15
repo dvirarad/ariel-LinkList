@@ -1,3 +1,6 @@
+console.log('🚀 Main.js loaded - Nevo\'s Learning Games');
+console.log('🌐 Browser:', navigator.userAgent);
+
 // Global game state
 let currentGame = null;
 let score = 0;
@@ -9,6 +12,9 @@ let speechSynth = window.speechSynthesis;
 let hebrewVoice = null;
 let speechRate = 0.75; // Default speech rate (can be adjusted in settings)
 let availableVoices = [];
+
+console.log('🎙️ Speech synthesis available:', !!speechSynth);
+console.log('📊 Initial speech rate:', speechRate);
 
 // Word images/emojis dictionary
 const wordImages = {
@@ -303,11 +309,16 @@ function getRandomItems(array, count) {
 
 // Initialize Hebrew voice and load all available voices
 function initHebrewVoice() {
+    console.log('🎤 initHebrewVoice called');
     availableVoices = speechSynth.getVoices();
+    console.log(`📋 Available voices: ${availableVoices.length}`, availableVoices.map(v => `${v.name} (${v.lang})`));
 
     if (availableVoices.length > 0 && !hebrewVoice) {
         // Try to find Hebrew voice, fallback to any voice
         hebrewVoice = availableVoices.find(voice => voice.lang.startsWith('he')) || availableVoices[0];
+        console.log('✅ Selected voice:', hebrewVoice ? `${hebrewVoice.name} (${hebrewVoice.lang})` : 'NONE');
+    } else if (!hebrewVoice) {
+        console.warn('⚠️ No voices available yet');
     }
 
     // Populate voice selector if it exists
@@ -323,34 +334,47 @@ function initHebrewVoice() {
             }
             voiceSelect.appendChild(option);
         });
+        console.log('🎛️ Voice selector populated');
     }
 }
 
 // Speak text in Hebrew
 function speakText(text, rate = null) {
+    console.log('🔊 speakText called with:', text);
+
     // Stop any current speech
     speechSynth.cancel();
 
     // Make sure voices are loaded
     if (availableVoices.length === 0) {
         availableVoices = speechSynth.getVoices();
+        console.log(`🔄 Reloaded voices: ${availableVoices.length}`);
     }
 
     // Initialize voice if needed
     if (!hebrewVoice && availableVoices.length > 0) {
         hebrewVoice = availableVoices.find(voice => voice.lang.startsWith('he')) || availableVoices[0];
+        console.log('🎯 Auto-selected voice:', hebrewVoice ? hebrewVoice.name : 'NONE');
     }
+
+    const finalRate = rate !== null ? rate : speechRate;
+    console.log(`⚙️ Speech settings: rate=${finalRate}, voice=${hebrewVoice ? hebrewVoice.name : 'default'}`);
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'he-IL';
-    utterance.rate = rate !== null ? rate : speechRate; // Use custom rate or global setting
-    utterance.pitch = 1.1; // Slightly higher pitch for friendliness
+    utterance.rate = finalRate;
+    utterance.pitch = 1.1;
     utterance.volume = 1.0;
 
     if (hebrewVoice) {
         utterance.voice = hebrewVoice;
     }
 
+    utterance.onstart = () => console.log('▶️ Speech started');
+    utterance.onend = () => console.log('⏹️ Speech ended');
+    utterance.onerror = (e) => console.error('❌ Speech error:', e);
+
+    console.log('📢 Calling speechSynth.speak()');
     speechSynth.speak(utterance);
 }
 
@@ -390,6 +414,7 @@ function createSpeakerButton(text, size = '1.5em') {
     };
 
     button.onclick = (e) => {
+        console.log('🖱️ Speaker button clicked for text:', text);
         e.stopPropagation();
         button.style.animation = 'pulse 0.5s';
         speakText(text);
@@ -461,8 +486,10 @@ const funMessages = [
 
 // Play random greeting or joke
 function playRandomGreeting() {
+    console.log('🎉 Fun button clicked!');
     const randomIndex = Math.floor(Math.random() * funMessages.length);
     const message = funMessages[randomIndex];
+    console.log('💬 Selected message:', message);
 
     // Animate the button
     const funButton = document.getElementById('fun-button');
@@ -512,23 +539,36 @@ function closeSettings() {
 
 // Test the current voice settings
 function testVoice() {
+    console.log('🧪 Test voice button clicked');
     const testMessage = 'שלום נבו! זה בדיקה של הקול והמהירות';
     speakText(testMessage);
 }
 
 // Load voices when they become available
 if (speechSynth.onvoiceschanged !== undefined) {
-    speechSynth.onvoiceschanged = initHebrewVoice;
+    console.log('👂 Registered onvoiceschanged listener');
+    speechSynth.onvoiceschanged = () => {
+        console.log('🔔 onvoiceschanged event fired!');
+        initHebrewVoice();
+    };
 }
 
 // Initialize on load
 window.addEventListener('DOMContentLoaded', () => {
+    console.log('📄 DOMContentLoaded - page ready');
+
     // Try to load voices immediately
     initHebrewVoice();
 
     // Try again after a delay (for browsers that load voices asynchronously)
-    setTimeout(initHebrewVoice, 100);
-    setTimeout(initHebrewVoice, 500);
+    setTimeout(() => {
+        console.log('⏰ Retry loading voices after 100ms');
+        initHebrewVoice();
+    }, 100);
+    setTimeout(() => {
+        console.log('⏰ Retry loading voices after 500ms');
+        initHebrewVoice();
+    }, 500);
 
     // Setup settings panel
     const rateSlider = document.getElementById('speech-rate');
