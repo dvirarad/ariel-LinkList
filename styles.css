@@ -122,6 +122,28 @@ header {
     gap: 20px;
 }
 
+.version-info {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    color: #667eea;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 50;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.version-info:hover {
+    background: white;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
 /* Game-specific styles */
 .letter-option, .word-option, .syllable-option {
     display: inline-block;

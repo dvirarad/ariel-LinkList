@@ -325,17 +325,96 @@ function initHebrewVoice() {
     const voiceSelect = document.getElementById('voice-select');
     if (voiceSelect && availableVoices.length > 0) {
         voiceSelect.innerHTML = '';
-        availableVoices.forEach((voice, index) => {
-            const option = document.createElement('option');
-            option.value = index;
-            option.textContent = `${voice.name} (${voice.lang})`;
-            if (voice === hebrewVoice) {
-                option.selected = true;
-            }
-            voiceSelect.appendChild(option);
-        });
-        console.log('🎛️ Voice selector populated');
+
+        // Group voices by language
+        const hebrewVoices = availableVoices.filter(v => v.lang.startsWith('he'));
+        const englishVoices = availableVoices.filter(v => v.lang.startsWith('en'));
+        const otherVoices = availableVoices.filter(v => !v.lang.startsWith('he') && !v.lang.startsWith('en'));
+
+        // Add Hebrew voices first
+        if (hebrewVoices.length > 0) {
+            const hebrewGroup = document.createElement('optgroup');
+            hebrewGroup.label = '🇮🇱 עברית';
+            hebrewVoices.forEach((voice) => {
+                const option = document.createElement('option');
+                option.value = availableVoices.indexOf(voice);
+                option.textContent = `${voice.name} ${voice.localService ? '(מקומי)' : '(אונליין)'}`;
+                if (voice === hebrewVoice) option.selected = true;
+                hebrewGroup.appendChild(option);
+            });
+            voiceSelect.appendChild(hebrewGroup);
+        }
+
+        // Add English voices
+        if (englishVoices.length > 0) {
+            const englishGroup = document.createElement('optgroup');
+            englishGroup.label = '🇬🇧 English';
+            englishVoices.forEach((voice) => {
+                const option = document.createElement('option');
+                option.value = availableVoices.indexOf(voice);
+                option.textContent = `${voice.name} ${voice.localService ? '(Local)' : '(Online)'}`;
+                if (voice === hebrewVoice) option.selected = true;
+                englishGroup.appendChild(option);
+            });
+            voiceSelect.appendChild(englishGroup);
+        }
+
+        // Add other voices
+        if (otherVoices.length > 0) {
+            const otherGroup = document.createElement('optgroup');
+            otherGroup.label = '🌍 שפות אחרות';
+            otherVoices.forEach((voice) => {
+                const option = document.createElement('option');
+                option.value = availableVoices.indexOf(voice);
+                option.textContent = `${voice.name} (${voice.lang})`;
+                if (voice === hebrewVoice) option.selected = true;
+                otherGroup.appendChild(option);
+            });
+            voiceSelect.appendChild(otherGroup);
+        }
+
+        console.log(`🎛️ Voice selector populated: ${hebrewVoices.length} Hebrew, ${englishVoices.length} English, ${otherVoices.length} Others`);
+        updateVoiceInfo();
     }
+}
+
+// Update voice info display
+function updateVoiceInfo() {
+    const voiceInfo = document.getElementById('voice-info');
+    if (voiceInfo && hebrewVoice) {
+        voiceInfo.innerHTML = `
+            <div style="text-align: right; padding: 10px; background: #f0f0f0; border-radius: 8px;">
+                <div><strong>שם:</strong> ${hebrewVoice.name}</div>
+                <div><strong>שפה:</strong> ${hebrewVoice.lang}</div>
+                <div><strong>סוג:</strong> ${hebrewVoice.localService ? 'מקומי (מהיר)' : 'אונליין (איכותי)'}</div>
+            </div>
+        `;
+    }
+}
+
+// Handle voice selection change
+function onVoiceChange() {
+    const voiceSelect = document.getElementById('voice-select');
+    const selectedIndex = parseInt(voiceSelect.value);
+    if (availableVoices[selectedIndex]) {
+        hebrewVoice = availableVoices[selectedIndex];
+        console.log('🔄 Voice changed to:', hebrewVoice.name);
+        updateVoiceInfo();
+    }
+}
+
+// Reload voices manually
+function reloadVoices() {
+    console.log('🔄 Manual voice reload requested');
+    availableVoices = [];
+    hebrewVoice = null;
+    initHebrewVoice();
+
+    // Try again after delay
+    setTimeout(initHebrewVoice, 100);
+    setTimeout(initHebrewVoice, 500);
+
+    alert('קולות נטענו מחדש! בדוק את הרשימה.');
 }
 
 // Speak text in Hebrew
@@ -372,10 +451,36 @@ function speakText(text, rate = null) {
 
     utterance.onstart = () => console.log('▶️ Speech started');
     utterance.onend = () => console.log('⏹️ Speech ended');
-    utterance.onerror = (e) => console.error('❌ Speech error:', e);
+    utterance.onerror = (e) => {
+        console.error('❌ Speech error details:', {
+            error: e.error,
+            charIndex: e.charIndex,
+            elapsedTime: e.elapsedTime,
+            name: e.name,
+            type: e.type
+        });
+
+        // Try fallback: speak without specific voice
+        if (hebrewVoice) {
+            console.log('🔄 Retrying without specific voice...');
+            const fallbackUtterance = new SpeechSynthesisUtterance(text);
+            fallbackUtterance.lang = 'he-IL';
+            fallbackUtterance.rate = finalRate;
+            fallbackUtterance.pitch = 1.1;
+            fallbackUtterance.volume = 1.0;
+            // Don't set voice - use browser default
+            fallbackUtterance.onstart = () => console.log('▶️ Fallback speech started');
+            fallbackUtterance.onend = () => console.log('⏹️ Fallback speech ended');
+            speechSynth.speak(fallbackUtterance);
+        }
+    };
 
     console.log('📢 Calling speechSynth.speak()');
-    speechSynth.speak(utterance);
+    try {
+        speechSynth.speak(utterance);
+    } catch (err) {
+        console.error('💥 Exception in speechSynth.speak():', err);
+    }
 }
 
 // Create speaker button that reads text when clicked

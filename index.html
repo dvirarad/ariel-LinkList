@@ -121,6 +121,8 @@
             <span>⭐ <span id="stars">0</span></span>
         </div>
 
+        <div class="version-info">v1.5.0</div>
+
         <button id="settings-button" class="settings-button" onclick="openSettings()">⚙️</button>
         <button id="fun-button" class="fun-button" onclick="playRandomGreeting()">🎉</button>
 
@@ -137,11 +139,13 @@
 
                 <div class="setting-group">
                     <label for="voice-select">בחירת קול:</label>
-                    <select id="voice-select"></select>
+                    <select id="voice-select" onchange="onVoiceChange()"></select>
+                    <div id="voice-info" style="margin-top: 10px; font-size: 0.9em; color: #888;"></div>
                 </div>
 
                 <div class="setting-group">
                     <button class="test-button" onclick="testVoice()">🔊 נסה את הקול</button>
+                    <button class="test-button" onclick="reloadVoices()" style="background: #667eea; margin-top: 10px;">🔄 טען קולות מחדש</button>
                 </div>
             </div>
         </div>
