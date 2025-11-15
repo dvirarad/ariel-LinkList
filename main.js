@@ -422,7 +422,10 @@ function speakText(text, rate = null) {
     console.log('🔊 speakText called with:', text);
 
     // Stop any current speech
-    speechSynth.cancel();
+    if (speechSynth.speaking || speechSynth.pending) {
+        console.log('⏸️ Stopping current speech...');
+        speechSynth.cancel();
+    }
 
     // Make sure voices are loaded
     if (availableVoices.length === 0) {
@@ -439,48 +442,54 @@ function speakText(text, rate = null) {
     const finalRate = rate !== null ? rate : speechRate;
     console.log(`⚙️ Speech settings: rate=${finalRate}, voice=${hebrewVoice ? hebrewVoice.name : 'default'}`);
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'he-IL';
-    utterance.rate = finalRate;
-    utterance.pitch = 1.1;
-    utterance.volume = 1.0;
+    // Wait a bit after cancel to ensure clean state
+    setTimeout(() => {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'he-IL';
+        utterance.rate = finalRate;
+        utterance.pitch = 1.1;
+        utterance.volume = 1.0;
 
-    if (hebrewVoice) {
-        utterance.voice = hebrewVoice;
-    }
-
-    utterance.onstart = () => console.log('▶️ Speech started');
-    utterance.onend = () => console.log('⏹️ Speech ended');
-    utterance.onerror = (e) => {
-        console.error('❌ Speech error details:', {
-            error: e.error,
-            charIndex: e.charIndex,
-            elapsedTime: e.elapsedTime,
-            name: e.name,
-            type: e.type
-        });
-
-        // Try fallback: speak without specific voice
         if (hebrewVoice) {
-            console.log('🔄 Retrying without specific voice...');
-            const fallbackUtterance = new SpeechSynthesisUtterance(text);
-            fallbackUtterance.lang = 'he-IL';
-            fallbackUtterance.rate = finalRate;
-            fallbackUtterance.pitch = 1.1;
-            fallbackUtterance.volume = 1.0;
-            // Don't set voice - use browser default
-            fallbackUtterance.onstart = () => console.log('▶️ Fallback speech started');
-            fallbackUtterance.onend = () => console.log('⏹️ Fallback speech ended');
-            speechSynth.speak(fallbackUtterance);
+            utterance.voice = hebrewVoice;
         }
-    };
 
-    console.log('📢 Calling speechSynth.speak()');
-    try {
-        speechSynth.speak(utterance);
-    } catch (err) {
-        console.error('💥 Exception in speechSynth.speak():', err);
-    }
+        utterance.onstart = () => console.log('▶️ Speech started');
+        utterance.onend = () => console.log('⏹️ Speech ended');
+        utterance.onerror = (e) => {
+            console.error('❌ Speech error details:', {
+                error: e.error,
+                charIndex: e.charIndex,
+                elapsedTime: e.elapsedTime,
+                name: e.name,
+                type: e.type
+            });
+
+            // Try fallback: speak without specific voice
+            if (hebrewVoice && e.error === 'canceled') {
+                console.log('🔄 Retrying without specific voice...');
+                speechSynth.cancel(); // Clear queue first
+                setTimeout(() => {
+                    const fallbackUtterance = new SpeechSynthesisUtterance(text);
+                    fallbackUtterance.lang = 'he-IL';
+                    fallbackUtterance.rate = finalRate;
+                    fallbackUtterance.pitch = 1.1;
+                    fallbackUtterance.volume = 1.0;
+                    // Don't set voice - use browser default
+                    fallbackUtterance.onstart = () => console.log('▶️ Fallback speech started');
+                    fallbackUtterance.onend = () => console.log('⏹️ Fallback speech ended');
+                    speechSynth.speak(fallbackUtterance);
+                }, 100);
+            }
+        };
+
+        console.log('📢 Calling speechSynth.speak()');
+        try {
+            speechSynth.speak(utterance);
+        } catch (err) {
+            console.error('💥 Exception in speechSynth.speak():', err);
+        }
+    }, 100); // 100ms delay after cancel
 }
 
 // Create speaker button that reads text when clicked
