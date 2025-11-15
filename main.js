@@ -12,7 +12,7 @@ let speechSynth = window.speechSynthesis;
 let hebrewVoice = null;
 let speechRate = 0.75; // Default speech rate (can be adjusted in settings)
 let availableVoices = [];
-let failedVoices = []; // Track voices that consistently fail
+let failedVoices = ['Carmit']; // Track voices that consistently fail - Carmit is blacklisted by default
 
 console.log('🎙️ Speech synthesis available:', !!speechSynth);
 console.log('📊 Initial speech rate:', speechRate);
@@ -321,6 +321,7 @@ function initHebrewVoice() {
 
         // Prefer local Hebrew voices (more reliable)
         const hebrewVoices = workingVoices.filter(voice => voice.lang.startsWith('he'));
+        console.log(`🇮🇱 Hebrew voices available:`, hebrewVoices.map(v => `${v.name} (${v.localService ? 'Local' : 'Online'})`));
         const localHebrewVoice = hebrewVoices.find(v => v.localService);
 
         // Priority: local Hebrew > any Hebrew > local English > any voice
@@ -464,9 +465,12 @@ function speakText(text, rate = null) {
         utterance.pitch = 1.1;
         utterance.volume = 1.0;
 
-        if (hebrewVoice) {
-            utterance.voice = hebrewVoice;
-        }
+        // TEMPORARY: Don't set specific voice - let browser choose
+        // This helps debug if the issue is voice-specific or general
+        console.log(`🎤 Available voice: ${hebrewVoice ? hebrewVoice.name : 'NONE'} - NOT setting it, letting browser choose`);
+        // if (hebrewVoice) {
+        //     utterance.voice = hebrewVoice;
+        // }
 
         let speechStarted = false;
         let timeoutId = null;
@@ -573,8 +577,16 @@ function speakText(text, rate = null) {
         };
 
         console.log('📢 Calling speechSynth.speak()');
+
+        // Resume synthesis in case it's paused (some browsers need this)
+        if (speechSynth.paused) {
+            console.log('🔓 Synthesis was paused, resuming...');
+            speechSynth.resume();
+        }
+
         try {
             speechSynth.speak(utterance);
+            console.log('✅ speechSynth.speak() called successfully');
         } catch (err) {
             if (timeoutId) clearTimeout(timeoutId);
             console.error('💥 Exception in speechSynth.speak():', err);
