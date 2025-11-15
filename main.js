@@ -314,9 +314,17 @@ function initHebrewVoice() {
     console.log(`📋 Available voices: ${availableVoices.length}`, availableVoices.map(v => `${v.name} (${v.lang})`));
 
     if (availableVoices.length > 0 && !hebrewVoice) {
-        // Try to find Hebrew voice, fallback to any voice
-        hebrewVoice = availableVoices.find(voice => voice.lang.startsWith('he')) || availableVoices[0];
-        console.log('✅ Selected voice:', hebrewVoice ? `${hebrewVoice.name} (${hebrewVoice.lang})` : 'NONE');
+        // Prefer local Hebrew voices (more reliable)
+        const hebrewVoices = availableVoices.filter(voice => voice.lang.startsWith('he'));
+        const localHebrewVoice = hebrewVoices.find(v => v.localService);
+
+        // Priority: local Hebrew > any Hebrew > local English > any voice
+        hebrewVoice = localHebrewVoice ||
+                      hebrewVoices[0] ||
+                      availableVoices.find(v => v.localService && v.lang.startsWith('en')) ||
+                      availableVoices[0];
+
+        console.log('✅ Selected voice:', hebrewVoice ? `${hebrewVoice.name} (${hebrewVoice.lang}, ${hebrewVoice.localService ? 'Local' : 'Online'})` : 'NONE');
     } else if (!hebrewVoice) {
         console.warn('⚠️ No voices available yet');
     }
@@ -454,9 +462,42 @@ function speakText(text, rate = null) {
             utterance.voice = hebrewVoice;
         }
 
-        utterance.onstart = () => console.log('▶️ Speech started');
-        utterance.onend = () => console.log('⏹️ Speech ended');
+        let speechStarted = false;
+        let timeoutId = null;
+
+        // Timeout detection: if speech doesn't start in 3 seconds, try fallback
+        timeoutId = setTimeout(() => {
+            if (!speechStarted) {
+                console.warn('⏱️ Speech timeout - voice not responding, trying fallback...');
+                speechSynth.cancel();
+
+                setTimeout(() => {
+                    const fallbackUtterance = new SpeechSynthesisUtterance(text);
+                    fallbackUtterance.lang = 'he-IL';
+                    fallbackUtterance.rate = finalRate;
+                    fallbackUtterance.pitch = 1.1;
+                    fallbackUtterance.volume = 1.0;
+                    // Don't set voice - use browser default
+                    fallbackUtterance.onstart = () => console.log('▶️ Fallback speech started');
+                    fallbackUtterance.onend = () => console.log('⏹️ Fallback speech ended');
+                    speechSynth.speak(fallbackUtterance);
+                }, 100);
+            }
+        }, 3000);
+
+        utterance.onstart = () => {
+            speechStarted = true;
+            if (timeoutId) clearTimeout(timeoutId);
+            console.log('▶️ Speech started');
+        };
+
+        utterance.onend = () => {
+            if (timeoutId) clearTimeout(timeoutId);
+            console.log('⏹️ Speech ended');
+        };
+
         utterance.onerror = (e) => {
+            if (timeoutId) clearTimeout(timeoutId);
             console.error('❌ Speech error details:', {
                 error: e.error,
                 charIndex: e.charIndex,
@@ -466,7 +507,7 @@ function speakText(text, rate = null) {
             });
 
             // Try fallback: speak without specific voice
-            if (hebrewVoice && e.error === 'canceled') {
+            if (hebrewVoice && (e.error === 'canceled' || e.error === 'interrupted')) {
                 console.log('🔄 Retrying without specific voice...');
                 speechSynth.cancel(); // Clear queue first
                 setTimeout(() => {
@@ -487,6 +528,7 @@ function speakText(text, rate = null) {
         try {
             speechSynth.speak(utterance);
         } catch (err) {
+            if (timeoutId) clearTimeout(timeoutId);
             console.error('💥 Exception in speechSynth.speak():', err);
         }
     }, 100); // 100ms delay after cancel
