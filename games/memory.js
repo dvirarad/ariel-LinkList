@@ -41,6 +41,7 @@ let memoryCards = [];
 let flippedCards = [];
 let matchedPairs = 0;
 let canFlip = true;
+let memoryGameSize = 12; // Default: 12 pairs (medium)
 
 function initMemoryGame() {
     matchedPairs = 0;
@@ -49,16 +50,54 @@ function initMemoryGame() {
     // Register cleanup function
     currentGameCleanup = cleanupMemoryGame;
 
-    // Select 8 words and duplicate them
-    const selectedWords = getRandomItems(memoryWords, 8);
+    // Show size selection
+    const gameContent = document.getElementById('game-content');
+    gameContent.innerHTML = `
+        <h2 class="question-text">בחר גודל משחק:</h2>
+        <div style="text-align: center; margin: 40px 0;">
+            <button class="size-button" onclick="startMemoryWithSize(8)">
+                <div style="font-size: 3em;">🎯</div>
+                <div style="font-size: 1.5em; margin-top: 10px;">קטן</div>
+                <div style="font-size: 1em; color: #666;">8 זוגות</div>
+            </button>
+            <button class="size-button" onclick="startMemoryWithSize(12)">
+                <div style="font-size: 3em;">🎲</div>
+                <div style="font-size: 1.5em; margin-top: 10px;">בינוני</div>
+                <div style="font-size: 1em; color: #666;">12 זוגות</div>
+            </button>
+            <button class="size-button" onclick="startMemoryWithSize(18)">
+                <div style="font-size: 3em;">🏆</div>
+                <div style="font-size: 1.5em; margin-top: 10px;">גדול</div>
+                <div style="font-size: 1em; color: #666;">18 זוגות</div>
+            </button>
+        </div>
+    `;
+}
+
+function startMemoryWithSize(size) {
+    memoryGameSize = size;
+    matchedPairs = 0;
+    flippedCards = [];
+
+    // Select words and duplicate them
+    const selectedWords = getRandomItems(memoryWords, size);
     memoryCards = shuffleArray([...selectedWords, ...selectedWords]);
 
     const gameContent = document.getElementById('game-content');
+
+    // Determine grid columns based on size
+    let gridCols = 4;
+    if (size === 12) gridCols = 4;
+    if (size === 18) gridCols = 6;
+
     gameContent.innerHTML = `
-        <h2 class="question-text">מצא את הזוגות!</h2>
-        <div class="memory-grid" id="memory-grid"></div>
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h2 class="question-text" style="display: inline-block; margin: 0;">מצא את הזוגות!</h2>
+            <button onclick="initMemoryGame()" style="margin-right: 15px; padding: 10px 20px; font-size: 1em; background: #667eea; color: white; border: none; border-radius: 10px; cursor: pointer;">🔄 שנה גודל</button>
+        </div>
+        <div class="memory-grid" id="memory-grid" style="grid-template-columns: repeat(${gridCols}, 1fr);"></div>
         <div style="text-align: center; margin-top: 30px; font-size: 1.5em; color: #667eea;">
-            <strong>זוגות שמצאת: ${matchedPairs} / 8 🎯</strong>
+            <strong>זוגות שמצאת: ${matchedPairs} / ${size} 🎯</strong>
         </div>
     `;
 
@@ -135,18 +174,18 @@ function checkMatch() {
             updateStars(2);
 
             // Update counter
-            const counterText = document.querySelector('.question-text').nextElementSibling.nextElementSibling;
-            counterText.innerHTML = `<strong>זוגות שמצאת: ${matchedPairs} / 8 🎯</strong>`;
+            const counterText = document.querySelector('.question-text').parentElement.nextElementSibling.nextElementSibling;
+            counterText.innerHTML = `<strong>זוגות שמצאת: ${matchedPairs} / ${memoryGameSize} 🎯</strong>`;
 
             flippedCards = [];
             canFlip = true;
 
-            if (matchedPairs === 8) {
+            if (matchedPairs === memoryGameSize) {
                 showFeedback('🎉 כל הכבוד! מצאת את כל הזוגות!', true);
                 celebrate();
 
                 setTimeout(() => {
-                    initMemoryGame();
+                    startMemoryWithSize(memoryGameSize); // Restart with same size
                 }, 3000);
             }
         }, 500);

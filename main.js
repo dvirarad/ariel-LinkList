@@ -165,8 +165,8 @@ function startGame(gameName) {
         case 'memory':
             initMemoryGame();
             break;
-        case 'syllables':
-            initSyllablesGame();
+        case 'letterWord':
+            initLetterWordGame();
             break;
         case 'writing':
             initWritingGame();
