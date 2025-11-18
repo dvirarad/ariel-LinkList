@@ -449,12 +449,6 @@ function speakText(text, rate = null) {
     const isSafari = /Safari/.test(navigator.userAgent) && /Apple Computer/.test(navigator.vendor);
     console.log(`🌐 Browser: Chrome=${isChrome}, Safari=${isSafari}`);
 
-    // Stop any current speech
-    if (speechSynth.speaking || speechSynth.pending) {
-        console.log('⏸️ Stopping current speech...');
-        speechSynth.cancel();
-    }
-
     // Make sure voices are loaded
     if (availableVoices.length === 0) {
         availableVoices = speechSynth.getVoices();
@@ -470,60 +464,59 @@ function speakText(text, rate = null) {
     const finalRate = rate !== null ? rate : speechRate;
     console.log(`⚙️ Speech settings: rate=${finalRate}, voice=${hebrewVoice ? hebrewVoice.name : 'default'}`);
 
-    // Wait a bit after cancel to ensure clean state
-    setTimeout(() => {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'he-IL';
-        utterance.rate = finalRate;
-        utterance.pitch = 1.1;
-        utterance.volume = 1.0;
+    // Create utterance
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'he-IL';
+    utterance.rate = finalRate;
+    utterance.pitch = 1.1;
+    utterance.volume = 1.0;
 
-        // Set voice for all browsers - respect user's choice
-        if (hebrewVoice) {
-            utterance.voice = hebrewVoice;
-            console.log(`🎤 Using selected voice: ${hebrewVoice.name} (${hebrewVoice.lang}, ${isChrome ? 'Chrome' : isSafari ? 'Safari' : 'Other'})`);
-        } else {
-            console.log(`🎤 No voice selected - using browser default for lang='he-IL'`);
+    // Set voice for all browsers - respect user's choice
+    if (hebrewVoice) {
+        utterance.voice = hebrewVoice;
+        console.log(`🎤 Using selected voice: ${hebrewVoice.name} (${hebrewVoice.lang}, ${isChrome ? 'Chrome' : isSafari ? 'Safari' : 'Other'})`);
+    } else {
+        console.log(`🎤 No voice selected - using browser default for lang='he-IL'`);
+    }
+
+    // Simple event handlers - no automatic voice switching
+    utterance.onstart = () => {
+        console.log('▶️ Speech started successfully');
+    };
+
+    utterance.onend = () => {
+        console.log('⏹️ Speech ended');
+    };
+
+    utterance.onerror = (e) => {
+        console.error('❌ Speech error:', {
+            error: e.error,
+            voiceName: hebrewVoice?.name,
+            text: text.substring(0, 50)
+        });
+
+        // Just log the error - don't change the user's voice selection
+        if (e.error === 'not-allowed') {
+            console.warn('⚠️ Speech not allowed - user interaction may be required');
         }
+    };
 
-        // Simple event handlers - no automatic voice switching
-        utterance.onstart = () => {
-            console.log('▶️ Speech started successfully');
-        };
+    // Stop any current speech ONLY if something is actually speaking
+    // Chrome bug: calling cancel() then speak() immediately causes "canceled" error
+    if (speechSynth.speaking) {
+        console.log('⏸️ Stopping current speech...');
+        speechSynth.cancel();
 
-        utterance.onend = () => {
-            console.log('⏹️ Speech ended');
-        };
-
-        utterance.onerror = (e) => {
-            console.error('❌ Speech error:', {
-                error: e.error,
-                voiceName: hebrewVoice?.name,
-                text: text.substring(0, 50)
-            });
-
-            // Just log the error - don't change the user's voice selection
-            if (e.error === 'not-allowed') {
-                console.warn('⚠️ Speech not allowed - user interaction may be required');
-            }
-        };
-
-        console.log('📢 Calling speechSynth.speak()');
-
-        // Resume synthesis in case it's paused (some browsers need this)
-        if (speechSynth.paused) {
-            console.log('🔓 Synthesis was paused, resuming...');
-            speechSynth.resume();
-        }
-
-        try {
+        // Chrome needs a small delay after cancel to avoid race condition
+        setTimeout(() => {
+            console.log('📢 Calling speechSynth.speak() after cancel');
             speechSynth.speak(utterance);
-            console.log('✅ speechSynth.speak() called successfully');
-        } catch (err) {
-            if (timeoutId) clearTimeout(timeoutId);
-            console.error('💥 Exception in speechSynth.speak():', err);
-        }
-    }, 100); // 100ms delay after cancel
+        }, 50);
+    } else {
+        // Nothing speaking - speak immediately without delay
+        console.log('📢 Calling speechSynth.speak()');
+        speechSynth.speak(utterance);
+    }
 }
 
 // Create speaker button that reads text when clicked
