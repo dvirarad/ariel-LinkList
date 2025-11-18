@@ -12,7 +12,6 @@ let speechSynth = window.speechSynthesis;
 let hebrewVoice = null;
 let speechRate = 0.75; // Default speech rate (can be adjusted in settings)
 let availableVoices = [];
-let failedVoices = ['Carmit']; // Track voices that consistently fail - Carmit is blacklisted by default
 
 console.log('🎙️ Speech synthesis available:', !!speechSynth);
 console.log('📊 Initial speech rate:', speechRate);
@@ -315,21 +314,15 @@ function initHebrewVoice() {
     console.log(`📋 Available voices: ${availableVoices.length}`, availableVoices.map(v => `${v.name} (${v.lang})`));
 
     if (availableVoices.length > 0 && !hebrewVoice) {
-        // Filter out failed voices
-        const workingVoices = availableVoices.filter(v => !failedVoices.includes(v.name));
-        console.log(`🔍 Filtering voices: ${availableVoices.length} total, ${failedVoices.length} blacklisted, ${workingVoices.length} available`);
-
-        // Prefer local Hebrew voices (more reliable)
-        const hebrewVoices = workingVoices.filter(voice => voice.lang.startsWith('he'));
+        // Prefer local Hebrew voices (most reliable and responsive)
+        const hebrewVoices = availableVoices.filter(voice => voice.lang.startsWith('he'));
         console.log(`🇮🇱 Hebrew voices available:`, hebrewVoices.map(v => `${v.name} (${v.localService ? 'Local' : 'Online'})`));
         const localHebrewVoice = hebrewVoices.find(v => v.localService);
 
-        // Priority: local Hebrew > any Hebrew > local English > any voice
+        // Priority: local Hebrew > any Hebrew > first available voice
         hebrewVoice = localHebrewVoice ||
                       hebrewVoices[0] ||
-                      workingVoices.find(v => v.localService && v.lang.startsWith('en')) ||
-                      workingVoices[0] ||
-                      availableVoices[0]; // Last resort: use any voice even if blacklisted
+                      availableVoices[0];
 
         console.log('✅ Selected voice:', hebrewVoice ? `${hebrewVoice.name} (${hebrewVoice.lang}, ${hebrewVoice.localService ? 'Local' : 'Online'})` : 'NONE');
     } else if (!hebrewVoice) {
@@ -506,107 +499,25 @@ function speakText(text, rate = null) {
             }
         }
 
-        let speechStarted = false;
-        let timeoutId = null;
-
-        // Timeout detection: if speech doesn't start in 500ms, try fallback
-        timeoutId = setTimeout(() => {
-            if (!speechStarted) {
-                console.warn('⏱️ Speech timeout - voice not responding, blacklisting and trying fallback...');
-
-                // Blacklist this voice
-                if (hebrewVoice && !failedVoices.includes(hebrewVoice.name)) {
-                    failedVoices.push(hebrewVoice.name);
-                    console.log(`🚫 Blacklisted voice: ${hebrewVoice.name}. Total blacklisted: ${failedVoices.length}`);
-                }
-
-                speechSynth.cancel();
-
-                // Select a new voice
-                const oldVoice = hebrewVoice;
-                hebrewVoice = null;
-                initHebrewVoice();
-
-                setTimeout(() => {
-                    const fallbackUtterance = new SpeechSynthesisUtterance(text);
-                    fallbackUtterance.lang = 'he-IL';
-                    fallbackUtterance.rate = finalRate;
-                    fallbackUtterance.pitch = 1.1;
-                    fallbackUtterance.volume = 1.0;
-
-                    // Use new voice if different from old one
-                    if (hebrewVoice && hebrewVoice.name !== oldVoice?.name) {
-                        fallbackUtterance.voice = hebrewVoice;
-                        console.log(`🔄 Trying new voice: ${hebrewVoice.name}`);
-                    } else {
-                        console.log('🔄 Using browser default (no voice set)');
-                    }
-
-                    fallbackUtterance.onstart = () => console.log('▶️ Fallback speech started');
-                    fallbackUtterance.onend = () => console.log('⏹️ Fallback speech ended');
-                    speechSynth.speak(fallbackUtterance);
-                }, 100);
-            }
-        }, 500); // Reduced to 500ms
-
+        // Simple event handlers - no automatic voice switching
         utterance.onstart = () => {
-            speechStarted = true;
-            if (timeoutId) clearTimeout(timeoutId);
-            console.log('▶️ Speech started');
+            console.log('▶️ Speech started successfully');
         };
 
         utterance.onend = () => {
-            if (timeoutId) clearTimeout(timeoutId);
             console.log('⏹️ Speech ended');
         };
 
         utterance.onerror = (e) => {
-            if (timeoutId) clearTimeout(timeoutId);
-            console.error('❌ Speech error details:', {
+            console.error('❌ Speech error:', {
                 error: e.error,
-                charIndex: e.charIndex,
-                elapsedTime: e.elapsedTime,
-                name: e.name,
-                type: e.type,
-                voiceName: hebrewVoice?.name
+                voiceName: hebrewVoice?.name,
+                text: text.substring(0, 50)
             });
 
-            // Only retry for canceled/interrupted errors if speech never started
-            if (hebrewVoice && (e.error === 'canceled' || e.error === 'interrupted') && !speechStarted) {
-                console.log('🔄 Voice failed to start, blacklisting and retrying...');
-
-                // Blacklist this voice
-                if (!failedVoices.includes(hebrewVoice.name)) {
-                    failedVoices.push(hebrewVoice.name);
-                    console.log(`🚫 Blacklisted voice: ${hebrewVoice.name}. Total blacklisted: ${failedVoices.length}`);
-                }
-
-                speechSynth.cancel(); // Clear queue first
-
-                // Select a new voice
-                const oldVoice = hebrewVoice;
-                hebrewVoice = null;
-                initHebrewVoice();
-
-                setTimeout(() => {
-                    const fallbackUtterance = new SpeechSynthesisUtterance(text);
-                    fallbackUtterance.lang = 'he-IL';
-                    fallbackUtterance.rate = finalRate;
-                    fallbackUtterance.pitch = 1.1;
-                    fallbackUtterance.volume = 1.0;
-
-                    // Use new voice if different from old one
-                    if (hebrewVoice && hebrewVoice.name !== oldVoice?.name) {
-                        fallbackUtterance.voice = hebrewVoice;
-                        console.log(`🔄 Trying new voice: ${hebrewVoice.name}`);
-                    } else {
-                        console.log('🔄 Using browser default (no voice set)');
-                    }
-
-                    fallbackUtterance.onstart = () => console.log('▶️ Fallback speech started');
-                    fallbackUtterance.onend = () => console.log('⏹️ Fallback speech ended');
-                    speechSynth.speak(fallbackUtterance);
-                }, 100);
+            // Just log the error - don't change the user's voice selection
+            if (e.error === 'not-allowed') {
+                console.warn('⚠️ Speech not allowed - user interaction may be required');
             }
         };
 
