@@ -501,21 +501,17 @@ function speakText(text, rate = null) {
         }
     };
 
-    // Stop any current speech ONLY if something is actually speaking
-    // Chrome bug: calling cancel() then speak() immediately causes "canceled" error
-    if (speechSynth.speaking) {
-        console.log('⏸️ Stopping current speech...');
-        speechSynth.cancel();
+    // Speak the utterance
+    // Chrome note: Let the browser handle queue management
+    // Calling cancel() causes "canceled" errors that prevent speech
+    console.log('📢 Calling speechSynth.speak()');
+    console.log(`   Speaking: ${speechSynth.speaking}, Pending: ${speechSynth.pending}`);
 
-        // Chrome needs a small delay after cancel to avoid race condition
-        setTimeout(() => {
-            console.log('📢 Calling speechSynth.speak() after cancel');
-            speechSynth.speak(utterance);
-        }, 50);
-    } else {
-        // Nothing speaking - speak immediately without delay
-        console.log('📢 Calling speechSynth.speak()');
+    try {
         speechSynth.speak(utterance);
+        console.log('✅ speechSynth.speak() called successfully');
+    } catch (err) {
+        console.error('💥 Exception in speechSynth.speak():', err);
     }
 }
 
