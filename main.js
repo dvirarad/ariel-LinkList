@@ -336,59 +336,40 @@ function initHebrewVoice() {
         console.warn('⚠️ No voices available yet');
     }
 
-    // Populate voice selector if it exists
+    // Populate voice selector if it exists - HEBREW ONLY
     const voiceSelect = document.getElementById('voice-select');
     if (voiceSelect && availableVoices.length > 0) {
         voiceSelect.innerHTML = '';
 
-        // Group voices by language
+        // Show only Hebrew voices (since this is a Hebrew learning app)
         const hebrewVoices = availableVoices.filter(v => v.lang.startsWith('he'));
-        const englishVoices = availableVoices.filter(v => v.lang.startsWith('en'));
-        const otherVoices = availableVoices.filter(v => !v.lang.startsWith('he') && !v.lang.startsWith('en'));
 
-        // Add Hebrew voices first
+        console.log(`🇮🇱 Found ${hebrewVoices.length} Hebrew voices`);
+
         if (hebrewVoices.length > 0) {
-            const hebrewGroup = document.createElement('optgroup');
-            hebrewGroup.label = '🇮🇱 עברית';
             hebrewVoices.forEach((voice) => {
                 const option = document.createElement('option');
+                // IMPORTANT: Store the actual index from availableVoices array
                 option.value = availableVoices.indexOf(voice);
                 option.textContent = `${voice.name} ${voice.localService ? '(מקומי)' : '(אונליין)'}`;
-                if (voice === hebrewVoice) option.selected = true;
-                hebrewGroup.appendChild(option);
+                // Check if this voice is currently selected
+                if (voice === hebrewVoice) {
+                    option.selected = true;
+                    console.log(`✅ Selected option: ${voice.name} (index: ${option.value})`);
+                }
+                voiceSelect.appendChild(option);
             });
-            voiceSelect.appendChild(hebrewGroup);
+        } else {
+            // No Hebrew voices found - show message
+            const option = document.createElement('option');
+            option.value = '-1';
+            option.textContent = 'אין קולות עבריים זמינים';
+            option.disabled = true;
+            voiceSelect.appendChild(option);
+            console.warn('⚠️ No Hebrew voices available!');
         }
 
-        // Add English voices
-        if (englishVoices.length > 0) {
-            const englishGroup = document.createElement('optgroup');
-            englishGroup.label = '🇬🇧 English';
-            englishVoices.forEach((voice) => {
-                const option = document.createElement('option');
-                option.value = availableVoices.indexOf(voice);
-                option.textContent = `${voice.name} ${voice.localService ? '(Local)' : '(Online)'}`;
-                if (voice === hebrewVoice) option.selected = true;
-                englishGroup.appendChild(option);
-            });
-            voiceSelect.appendChild(englishGroup);
-        }
-
-        // Add other voices
-        if (otherVoices.length > 0) {
-            const otherGroup = document.createElement('optgroup');
-            otherGroup.label = '🌍 שפות אחרות';
-            otherVoices.forEach((voice) => {
-                const option = document.createElement('option');
-                option.value = availableVoices.indexOf(voice);
-                option.textContent = `${voice.name} (${voice.lang})`;
-                if (voice === hebrewVoice) option.selected = true;
-                otherGroup.appendChild(option);
-            });
-            voiceSelect.appendChild(otherGroup);
-        }
-
-        console.log(`🎛️ Voice selector populated: ${hebrewVoices.length} Hebrew, ${englishVoices.length} English, ${otherVoices.length} Others`);
+        console.log(`🎛️ Voice selector populated with ${hebrewVoices.length} Hebrew voices only`);
         updateVoiceInfo();
     }
 }
@@ -411,10 +392,27 @@ function updateVoiceInfo() {
 function onVoiceChange() {
     const voiceSelect = document.getElementById('voice-select');
     const selectedIndex = parseInt(voiceSelect.value);
+
+    console.log(`🔄 Voice selection changed: selectedIndex=${selectedIndex}, total voices=${availableVoices.length}`);
+
+    if (selectedIndex === -1) {
+        console.warn('⚠️ No valid voice selected (no Hebrew voices available)');
+        return;
+    }
+
     if (availableVoices[selectedIndex]) {
+        const oldVoice = hebrewVoice;
         hebrewVoice = availableVoices[selectedIndex];
-        console.log('🔄 Voice changed to:', hebrewVoice.name);
+
+        console.log(`✅ Voice changed from "${oldVoice?.name}" to "${hebrewVoice.name}"`);
+        console.log(`   Language: ${hebrewVoice.lang}, Type: ${hebrewVoice.localService ? 'Local' : 'Online'}`);
+
         updateVoiceInfo();
+
+        // Test the new voice immediately
+        speakText('זהו הקול שבחרת', speechRate);
+    } else {
+        console.error(`❌ Invalid voice index: ${selectedIndex}`);
     }
 }
 
@@ -465,12 +463,13 @@ function speakText(text, rate = null) {
         utterance.pitch = 1.1;
         utterance.volume = 1.0;
 
-        // TEMPORARY: Don't set specific voice - let browser choose
-        // This helps debug if the issue is voice-specific or general
-        console.log(`🎤 Available voice: ${hebrewVoice ? hebrewVoice.name : 'NONE'} - NOT setting it, letting browser choose`);
-        // if (hebrewVoice) {
-        //     utterance.voice = hebrewVoice;
-        // }
+        // Set specific voice if available
+        if (hebrewVoice) {
+            utterance.voice = hebrewVoice;
+            console.log(`🎤 Using voice: ${hebrewVoice.name} (${hebrewVoice.lang})`);
+        } else {
+            console.log(`🎤 No specific voice set - using browser default`);
+        }
 
         let speechStarted = false;
         let timeoutId = null;
@@ -738,13 +737,14 @@ function openSettings() {
     rateSlider.oninput = function() {
         speechRate = parseFloat(this.value);
         rateValue.textContent = speechRate;
+        console.log(`⚙️ Speech rate changed to: ${speechRate}`);
     };
 
-    // Add listener for voice selection
-    const voiceSelect = document.getElementById('voice-select');
-    voiceSelect.onchange = function() {
-        hebrewVoice = availableVoices[this.value];
-    };
+    // Ensure voice selector is populated and up to date
+    if (availableVoices.length === 0) {
+        console.log('⚠️ Voices not loaded yet, loading now...');
+        initHebrewVoice();
+    }
 }
 
 // Close settings modal
