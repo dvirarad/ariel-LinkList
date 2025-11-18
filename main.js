@@ -478,25 +478,12 @@ function speakText(text, rate = null) {
         utterance.pitch = 1.1;
         utterance.volume = 1.0;
 
-        // Chrome-specific handling: Only set voice if it's actually Hebrew
-        // Otherwise let Chrome use its default Hebrew voice based on lang='he-IL'
-        if (isChrome) {
-            // In Chrome, only set voice if we have a Hebrew voice
-            if (hebrewVoice && hebrewVoice.lang.startsWith('he')) {
-                utterance.voice = hebrewVoice;
-                console.log(`🎤 Chrome: Using Hebrew voice: ${hebrewVoice.name}`);
-            } else {
-                // Don't set voice - let Chrome choose based on lang
-                console.log(`🎤 Chrome: No Hebrew voice, letting Chrome choose based on lang='he-IL'`);
-            }
+        // Set voice for all browsers - respect user's choice
+        if (hebrewVoice) {
+            utterance.voice = hebrewVoice;
+            console.log(`🎤 Using selected voice: ${hebrewVoice.name} (${hebrewVoice.lang}, ${isChrome ? 'Chrome' : isSafari ? 'Safari' : 'Other'})`);
         } else {
-            // Safari and other browsers: set voice if available
-            if (hebrewVoice) {
-                utterance.voice = hebrewVoice;
-                console.log(`🎤 Safari/Other: Using voice: ${hebrewVoice.name} (${hebrewVoice.lang})`);
-            } else {
-                console.log(`🎤 No specific voice set - using browser default`);
-            }
+            console.log(`🎤 No voice selected - using browser default for lang='he-IL'`);
         }
 
         // Simple event handlers - no automatic voice switching
