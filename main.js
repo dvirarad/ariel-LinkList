@@ -336,17 +336,18 @@ function initHebrewVoice() {
         console.warn('⚠️ No voices available yet');
     }
 
-    // Populate voice selector if it exists - HEBREW ONLY
+    // Populate voice selector if it exists - HEBREW PREFERRED
     const voiceSelect = document.getElementById('voice-select');
     if (voiceSelect && availableVoices.length > 0) {
         voiceSelect.innerHTML = '';
 
-        // Show only Hebrew voices (since this is a Hebrew learning app)
+        // Show Hebrew voices first, but if none available, show all voices
         const hebrewVoices = availableVoices.filter(v => v.lang.startsWith('he'));
 
-        console.log(`🇮🇱 Found ${hebrewVoices.length} Hebrew voices`);
+        console.log(`🇮🇱 Found ${hebrewVoices.length} Hebrew voices out of ${availableVoices.length} total`);
 
         if (hebrewVoices.length > 0) {
+            // We have Hebrew voices - show only those
             hebrewVoices.forEach((voice) => {
                 const option = document.createElement('option');
                 // IMPORTANT: Store the actual index from availableVoices array
@@ -359,17 +360,33 @@ function initHebrewVoice() {
                 }
                 voiceSelect.appendChild(option);
             });
+            console.log(`🎛️ Voice selector populated with ${hebrewVoices.length} Hebrew voices only`);
         } else {
-            // No Hebrew voices found - show message
-            const option = document.createElement('option');
-            option.value = '-1';
-            option.textContent = 'אין קולות עבריים זמינים';
-            option.disabled = true;
-            voiceSelect.appendChild(option);
-            console.warn('⚠️ No Hebrew voices available!');
+            // No Hebrew voices - show all voices with warning
+            console.warn('⚠️ No Hebrew voices available! Showing all voices as fallback');
+
+            // Add warning message at top
+            const warningOption = document.createElement('option');
+            warningOption.value = '-1';
+            warningOption.textContent = '⚠️ אין קולות עבריים - בחר קול כלשהו:';
+            warningOption.disabled = true;
+            warningOption.selected = true;
+            voiceSelect.appendChild(warningOption);
+
+            // Show all available voices
+            availableVoices.forEach((voice, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${voice.name} (${voice.lang}) ${voice.localService ? '[מקומי]' : '[אונליין]'}`;
+                if (voice === hebrewVoice) {
+                    option.selected = true;
+                }
+                voiceSelect.appendChild(option);
+            });
+
+            console.log(`🌍 Voice selector populated with all ${availableVoices.length} voices (no Hebrew found)`);
         }
 
-        console.log(`🎛️ Voice selector populated with ${hebrewVoices.length} Hebrew voices only`);
         updateVoiceInfo();
     }
 }
@@ -434,6 +451,11 @@ function reloadVoices() {
 function speakText(text, rate = null) {
     console.log('🔊 speakText called with:', text);
 
+    // Detect browser type
+    const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+    const isSafari = /Safari/.test(navigator.userAgent) && /Apple Computer/.test(navigator.vendor);
+    console.log(`🌐 Browser: Chrome=${isChrome}, Safari=${isSafari}`);
+
     // Stop any current speech
     if (speechSynth.speaking || speechSynth.pending) {
         console.log('⏸️ Stopping current speech...');
@@ -463,12 +485,25 @@ function speakText(text, rate = null) {
         utterance.pitch = 1.1;
         utterance.volume = 1.0;
 
-        // Set specific voice if available
-        if (hebrewVoice) {
-            utterance.voice = hebrewVoice;
-            console.log(`🎤 Using voice: ${hebrewVoice.name} (${hebrewVoice.lang})`);
+        // Chrome-specific handling: Only set voice if it's actually Hebrew
+        // Otherwise let Chrome use its default Hebrew voice based on lang='he-IL'
+        if (isChrome) {
+            // In Chrome, only set voice if we have a Hebrew voice
+            if (hebrewVoice && hebrewVoice.lang.startsWith('he')) {
+                utterance.voice = hebrewVoice;
+                console.log(`🎤 Chrome: Using Hebrew voice: ${hebrewVoice.name}`);
+            } else {
+                // Don't set voice - let Chrome choose based on lang
+                console.log(`🎤 Chrome: No Hebrew voice, letting Chrome choose based on lang='he-IL'`);
+            }
         } else {
-            console.log(`🎤 No specific voice set - using browser default`);
+            // Safari and other browsers: set voice if available
+            if (hebrewVoice) {
+                utterance.voice = hebrewVoice;
+                console.log(`🎤 Safari/Other: Using voice: ${hebrewVoice.name} (${hebrewVoice.lang})`);
+            } else {
+                console.log(`🎤 No specific voice set - using browser default`);
+            }
         }
 
         let speechStarted = false;
