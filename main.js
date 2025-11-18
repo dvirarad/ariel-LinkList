@@ -8,13 +8,30 @@ let stars = 0;
 let currentGameCleanup = null;
 
 // Audio system for Hebrew speech
-let speechSynth = window.speechSynthesis;
+let speechSynth = null;
 let hebrewVoice = null;
 let speechRate = 0.75; // Default speech rate (can be adjusted in settings)
 let availableVoices = [];
 
-console.log('🎙️ Speech synthesis available:', !!speechSynth);
-console.log('📊 Initial speech rate:', speechRate);
+// Safely initialize speech synthesis
+// Disable in headless/test mode to prevent crashes
+const isHeadless = navigator.userAgent.includes('HeadlessChrome') ||
+                   navigator.webdriver === true ||
+                   window.location.search.includes('test=true');
+
+if (isHeadless) {
+    console.log('🧪 Test/Headless mode detected - Speech synthesis disabled');
+    speechSynth = null;
+} else {
+    try {
+        speechSynth = window.speechSynthesis;
+        console.log('🎙️ Speech synthesis available:', !!speechSynth);
+        console.log('📊 Initial speech rate:', speechRate);
+    } catch (err) {
+        console.warn('⚠️ Speech synthesis not available:', err);
+        speechSynth = null;
+    }
+}
 
 // Word images/emojis dictionary
 const wordImages = {
@@ -310,8 +327,20 @@ function getRandomItems(array, count) {
 // Initialize Hebrew voice and load all available voices
 function initHebrewVoice() {
     console.log('🎤 initHebrewVoice called');
-    availableVoices = speechSynth.getVoices();
-    console.log(`📋 Available voices: ${availableVoices.length}`, availableVoices.map(v => `${v.name} (${v.lang})`));
+
+    if (!speechSynth) {
+        console.warn('⚠️ Speech synthesis not available, skipping voice initialization');
+        return;
+    }
+
+    try {
+        availableVoices = speechSynth.getVoices();
+        console.log(`📋 Available voices: ${availableVoices.length}`, availableVoices.map(v => `${v.name} (${v.lang})`));
+    } catch (err) {
+        console.error('❌ Error getting voices:', err);
+        availableVoices = [];
+        return;
+    }
 
     if (availableVoices.length > 0 && !hebrewVoice) {
         // Prefer local Hebrew voices (most reliable and responsive)
@@ -471,15 +500,26 @@ function reloadVoices() {
 function speakText(text, rate = null) {
     console.log('🔊 speakText called with:', text);
 
+    // Check if speech synthesis is available
+    if (!speechSynth) {
+        console.warn('⚠️ Speech synthesis not available, skipping speech');
+        return;
+    }
+
     // Detect browser type
     const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
     const isSafari = /Safari/.test(navigator.userAgent) && /Apple Computer/.test(navigator.vendor);
     console.log(`🌐 Browser: Chrome=${isChrome}, Safari=${isSafari}`);
 
     // Make sure voices are loaded
-    if (availableVoices.length === 0) {
-        availableVoices = speechSynth.getVoices();
-        console.log(`🔄 Reloaded voices: ${availableVoices.length}`);
+    try {
+        if (availableVoices.length === 0) {
+            availableVoices = speechSynth.getVoices();
+            console.log(`🔄 Reloaded voices: ${availableVoices.length}`);
+        }
+    } catch (err) {
+        console.error('❌ Error loading voices:', err);
+        return;
     }
 
     // Initialize voice if needed
@@ -724,7 +764,7 @@ function testVoice() {
 }
 
 // Load voices when they become available
-if (speechSynth.onvoiceschanged !== undefined) {
+if (speechSynth && speechSynth.onvoiceschanged !== undefined) {
     console.log('👂 Registered onvoiceschanged listener');
     speechSynth.onvoiceschanged = () => {
         console.log('🔔 onvoiceschanged event fired!');
