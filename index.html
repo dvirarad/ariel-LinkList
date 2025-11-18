@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>משחקי נבו - לומדים לקרוא ולכתוב!</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="main-title">🎮 משחקי נבו 🎮</h1>
+            <p class="subtitle">שלום נבו! בוא נלמד עברית בכיף!</p>
+        </header>
+
+        <div id="game-menu" class="game-menu">
+            <div class="game-card" onclick="startGame('letters')">
+                <div class="game-icon">🔤</div>
+                <h2>זיהוי אותיות</h2>
+                <p>לומדים להכיר את האותיות</p>
+            </div>
+
+            <div class="game-card" onclick="startGame('wordBuilder')">
+                <div class="game-icon">🧩</div>
+                <h2>בונים מילים</h2>
+                <p>מרכיבים מילים מאותיות</p>
+            </div>
+
+            <div class="game-card" onclick="startGame('memory')">
+                <div class="game-icon">🎴</div>
+                <h2>משחק זיכרון</h2>
+                <p>מוצאים זוגות של מילים</p>
+            </div>
+
+            <div class="game-card" onclick="startGame('letterWord')">
+                <div class="game-icon">🔤</div>
+                <h2>אות ומילה</h2>
+                <p>חבר מילה לאות שמתחילה אותה</p>
+            </div>
+
+            <div class="game-card" onclick="startGame('writing')">
+                <div class="game-icon">✏️</div>
+                <h2>כותבים אותיות</h2>
+                <p>מתרגלים לכתוב</p>
+            </div>
+
+            <div class="game-card" onclick="startGame('sounds')">
+                <div class="game-icon">🔊</div>
+                <h2>התאמת צלילים</h2>
+                <p>מתאימים אותיות לצלילים</p>
+            </div>
+
+            <div class="game-card action-game" onclick="startGame('carRace')">
+                <div class="game-icon">🏎️</div>
+                <h2>מרוץ מכוניות</h2>
+                <p>רוץ מהר עם אותיות נכונות!</p>
+            </div>
+
+            <div class="game-card action-game" onclick="startGame('tractor')">
+                <div class="game-icon">🚜</div>
+                <h2>טרקטור בשדה</h2>
+                <p>אסוף אותיות ובנה מילים!</p>
+            </div>
+
+            <div class="game-card action-game" onclick="startGame('space')">
+                <div class="game-icon">🚀</div>
+                <h2>חלל האותיות</h2>
+                <p>ירה על המטאורים הנכונים!</p>
+            </div>
+
+            <div class="game-card action-game" onclick="startGame('soccer')">
+                <div class="game-icon">⚽</div>
+                <h2>כדורגל אותיות</h2>
+                <p>בעט בכדור הנכון לשער!</p>
+            </div>
+
+            <div class="game-card action-game" onclick="startGame('fishing')">
+                <div class="game-icon">🎣</div>
+                <h2>דיג מילים</h2>
+                <p>דוג דגים עם אותיות!</p>
+            </div>
+
+            <div class="game-card action-game" onclick="startGame('zoo')">
+                <div class="game-icon">🦁</div>
+                <h2>הרפתקה בגן החיות</h2>
+                <p>האכל חיות עם מילים!</p>
+            </div>
+
+            <div class="game-card action-game" onclick="startGame('balloons')">
+                <div class="game-icon">🎈</div>
+                <h2>ירי בבלונים</h2>
+                <p>פוצץ בלונים עם אותיות!</p>
+            </div>
+
+            <div class="game-card action-game" onclick="startGame('pizza')">
+                <div class="game-icon">🍕</div>
+                <h2>פיצרייה של מילים</h2>
+                <p>הכן פיצה עם תוספות!</p>
+            </div>
+
+            <div class="game-card action-game" onclick="startGame('train')">
+                <div class="game-icon">🚂</div>
+                <h2>רכבת המילים</h2>
+                <p>סדר קרונות לבניית מילים!</p>
+            </div>
+
+            <div class="game-card action-game" onclick="startGame('airplane')">
+                <div class="game-icon">✈️</div>
+                <h2>מטוס אותיות</h2>
+                <p>העף בשמיים וצור מילים!</p>
+            </div>
+        </div>
+
+        <div id="game-container" class="game-container hidden">
+            <button class="back-button" onclick="backToMenu()">🏠 חזרה לתפריט</button>
+            <div id="game-content"></div>
+        </div>
+
+        <div id="score-panel" class="score-panel">
+            <span>ניקוד: <span id="score">0</span></span>
+            <span>⭐ <span id="stars">0</span></span>
+        </div>
+
+        <div class="version-info">v1.5.11</div>
+
+        <button id="settings-button" class="settings-button" onclick="openSettings()">⚙️</button>
+        <button id="fun-button" class="fun-button" onclick="playRandomGreeting()">🎉</button>
+
+        <div id="settings-modal" class="settings-modal hidden">
+            <div class="settings-content">
+                <h2>הגדרות 🎛️</h2>
+                <button class="close-settings" onclick="closeSettings()">✖️</button>
+
+                <div class="setting-group">
+                    <label for="speech-rate">מהירות דיבור:</label>
+                    <input type="range" id="speech-rate" min="0.5" max="1.5" step="0.1" value="0.75">
+                    <span id="rate-value">0.75</span>
+                </div>
+
+                <div class="setting-group">
+                    <label for="voice-select">בחירת קול:</label>
+                    <select id="voice-select" onchange="onVoiceChange()"></select>
+                    <div id="voice-info" style="margin-top: 10px; font-size: 0.9em; color: #888;"></div>
+                </div>
+
+                <div class="setting-group">
+                    <button class="test-button" onclick="testVoice()">🔊 נסה את הקול</button>
+                    <button class="test-button" onclick="reloadVoices()" style="background: #667eea; margin-top: 10px;">🔄 טען קולות מחדש</button>
+                </div>
+
+                <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 8px; font-size: 0.85em; text-align: right;">
+                    <strong>💡 עצה:</strong> אם הקול לא עובד ב-Chrome, נסה:
+                    <ul style="margin: 5px 0; padding-right: 20px;">
+                        <li>לחץ על "🔊 נסה את הקול" למעלה</li>
+                        <li>בדוק שהדפדפן לא מושתק (🔇)</li>
+                        <li>נסה דפדפן אחר (Safari/Edge)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+    <script src="games/letters.js"></script>
+    <script src="games/wordBuilder.js"></script>
+    <script src="games/memory.js"></script>
+    <script src="games/letterWord.js"></script>
+    <script src="games/writing.js"></script>
+    <script src="games/sounds.js"></script>
+    <script src="games/carRace.js"></script>
+    <script src="games/tractor.js"></script>
+    <script src="games/space.js"></script>
+    <script src="games/soccer.js"></script>
+    <script src="games/fishing.js"></script>
+    <script src="games/zoo.js"></script>
+    <script src="games/balloons.js"></script>
+    <script src="games/pizza.js"></script>
+    <script src="games/train.js"></script>
+    <script src="games/airplane.js"></script>
+</body>
+</html>
