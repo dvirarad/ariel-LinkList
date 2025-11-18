@@ -502,10 +502,14 @@ function speakText(text, rate = null) {
     };
 
     // Speak the utterance
-    // Chrome note: Let the browser handle queue management
-    // Calling cancel() causes "canceled" errors that prevent speech
     console.log('📢 Calling speechSynth.speak()');
-    console.log(`   Speaking: ${speechSynth.speaking}, Pending: ${speechSynth.pending}`);
+    console.log(`   Speaking: ${speechSynth.speaking}, Pending: ${speechSynth.pending}, Paused: ${speechSynth.paused}`);
+
+    // Chrome fix: Resume if paused (Chrome sometimes starts in paused state)
+    if (speechSynth.paused) {
+        console.log('🔓 Speech was paused, resuming...');
+        speechSynth.resume();
+    }
 
     try {
         speechSynth.speak(utterance);
