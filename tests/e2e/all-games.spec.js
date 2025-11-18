@@ -7,8 +7,8 @@ test.describe('Hebrew Learning Games Platform', () => {
   });
 
   test('homepage loads correctly', async ({ page }) => {
-    await expect(page.locator('h1.main-title')).toContainText('משחקי קריאה וכתיבה');
-    await expect(page.locator('.subtitle')).toContainText('בואו נלמד עברית בכיף');
+    await expect(page.locator('h1.main-title')).toContainText('משחקי נבו');
+    await expect(page.locator('.subtitle')).toContainText('בוא נלמד עברית בכיף');
 
     // Check all game cards are visible
     const gameCards = page.locator('.game-card');
@@ -60,12 +60,12 @@ test.describe('Hebrew Learning Games Platform', () => {
     await expect(page.locator('.game-menu')).toBeVisible();
   });
 
-  test('Syllables Game - קוראים הברות', async ({ page }) => {
-    await page.click('text=קוראים הברות');
+  test('Letter-Word Game - אות ומילה', async ({ page }) => {
+    await page.click('text=אות ומילה');
     await expect(page.locator('#game-container')).toBeVisible();
     await expect(page.locator('.question-text')).toBeVisible();
 
-    // Should have syllable options
+    // Should have word options
     await page.waitForTimeout(1000);
 
     await page.click('.back-button');

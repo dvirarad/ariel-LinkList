@@ -12,7 +12,6 @@ let speechSynth = window.speechSynthesis;
 let hebrewVoice = null;
 let speechRate = 0.75; // Default speech rate (can be adjusted in settings)
 let availableVoices = [];
-let failedVoices = ['Carmit']; // Track voices that consistently fail - Carmit is blacklisted by default
 
 console.log('🎙️ Speech synthesis available:', !!speechSynth);
 console.log('📊 Initial speech rate:', speechRate);
@@ -315,80 +314,78 @@ function initHebrewVoice() {
     console.log(`📋 Available voices: ${availableVoices.length}`, availableVoices.map(v => `${v.name} (${v.lang})`));
 
     if (availableVoices.length > 0 && !hebrewVoice) {
-        // Filter out failed voices
-        const workingVoices = availableVoices.filter(v => !failedVoices.includes(v.name));
-        console.log(`🔍 Filtering voices: ${availableVoices.length} total, ${failedVoices.length} blacklisted, ${workingVoices.length} available`);
-
-        // Prefer local Hebrew voices (more reliable)
-        const hebrewVoices = workingVoices.filter(voice => voice.lang.startsWith('he'));
+        // Prefer local Hebrew voices (most reliable and responsive)
+        const hebrewVoices = availableVoices.filter(voice => voice.lang.startsWith('he'));
         console.log(`🇮🇱 Hebrew voices available:`, hebrewVoices.map(v => `${v.name} (${v.localService ? 'Local' : 'Online'})`));
         const localHebrewVoice = hebrewVoices.find(v => v.localService);
 
-        // Priority: local Hebrew > any Hebrew > local English > any voice
+        // Priority: local Hebrew > any Hebrew > first available voice
         hebrewVoice = localHebrewVoice ||
                       hebrewVoices[0] ||
-                      workingVoices.find(v => v.localService && v.lang.startsWith('en')) ||
-                      workingVoices[0] ||
-                      availableVoices[0]; // Last resort: use any voice even if blacklisted
+                      availableVoices[0];
 
         console.log('✅ Selected voice:', hebrewVoice ? `${hebrewVoice.name} (${hebrewVoice.lang}, ${hebrewVoice.localService ? 'Local' : 'Online'})` : 'NONE');
     } else if (!hebrewVoice) {
         console.warn('⚠️ No voices available yet');
     }
 
-    // Populate voice selector if it exists
+    // Populate voice selector if it exists - HEBREW PREFERRED
     const voiceSelect = document.getElementById('voice-select');
     if (voiceSelect && availableVoices.length > 0) {
         voiceSelect.innerHTML = '';
 
-        // Group voices by language
+        // Show Hebrew voices first, but if none available, show all voices
         const hebrewVoices = availableVoices.filter(v => v.lang.startsWith('he'));
-        const englishVoices = availableVoices.filter(v => v.lang.startsWith('en'));
-        const otherVoices = availableVoices.filter(v => !v.lang.startsWith('he') && !v.lang.startsWith('en'));
 
-        // Add Hebrew voices first
+        console.log(`🇮🇱 Found ${hebrewVoices.length} Hebrew voices out of ${availableVoices.length} total`);
+
         if (hebrewVoices.length > 0) {
-            const hebrewGroup = document.createElement('optgroup');
-            hebrewGroup.label = '🇮🇱 עברית';
+            // Add "Automatic" option at the top
+            const autoOption = document.createElement('option');
+            autoOption.value = 'auto';
+            autoOption.textContent = '🤖 אוטומטי (תן לדפדפן לבחור)';
+            voiceSelect.appendChild(autoOption);
+
+            // We have Hebrew voices - show only those
             hebrewVoices.forEach((voice) => {
                 const option = document.createElement('option');
+                // IMPORTANT: Store the actual index from availableVoices array
                 option.value = availableVoices.indexOf(voice);
                 option.textContent = `${voice.name} ${voice.localService ? '(מקומי)' : '(אונליין)'}`;
-                if (voice === hebrewVoice) option.selected = true;
-                hebrewGroup.appendChild(option);
+                // Check if this voice is currently selected
+                if (voice === hebrewVoice) {
+                    option.selected = true;
+                    console.log(`✅ Selected option: ${voice.name} (index: ${option.value})`);
+                }
+                voiceSelect.appendChild(option);
             });
-            voiceSelect.appendChild(hebrewGroup);
-        }
+            console.log(`🎛️ Voice selector populated with ${hebrewVoices.length} Hebrew voices + Auto`);
+        } else {
+            // No Hebrew voices - show all voices with warning
+            console.warn('⚠️ No Hebrew voices available! Showing all voices as fallback');
 
-        // Add English voices
-        if (englishVoices.length > 0) {
-            const englishGroup = document.createElement('optgroup');
-            englishGroup.label = '🇬🇧 English';
-            englishVoices.forEach((voice) => {
+            // Add warning message at top
+            const warningOption = document.createElement('option');
+            warningOption.value = '-1';
+            warningOption.textContent = '⚠️ אין קולות עבריים - בחר קול כלשהו:';
+            warningOption.disabled = true;
+            warningOption.selected = true;
+            voiceSelect.appendChild(warningOption);
+
+            // Show all available voices
+            availableVoices.forEach((voice, index) => {
                 const option = document.createElement('option');
-                option.value = availableVoices.indexOf(voice);
-                option.textContent = `${voice.name} ${voice.localService ? '(Local)' : '(Online)'}`;
-                if (voice === hebrewVoice) option.selected = true;
-                englishGroup.appendChild(option);
+                option.value = index;
+                option.textContent = `${voice.name} (${voice.lang}) ${voice.localService ? '[מקומי]' : '[אונליין]'}`;
+                if (voice === hebrewVoice) {
+                    option.selected = true;
+                }
+                voiceSelect.appendChild(option);
             });
-            voiceSelect.appendChild(englishGroup);
+
+            console.log(`🌍 Voice selector populated with all ${availableVoices.length} voices (no Hebrew found)`);
         }
 
-        // Add other voices
-        if (otherVoices.length > 0) {
-            const otherGroup = document.createElement('optgroup');
-            otherGroup.label = '🌍 שפות אחרות';
-            otherVoices.forEach((voice) => {
-                const option = document.createElement('option');
-                option.value = availableVoices.indexOf(voice);
-                option.textContent = `${voice.name} (${voice.lang})`;
-                if (voice === hebrewVoice) option.selected = true;
-                otherGroup.appendChild(option);
-            });
-            voiceSelect.appendChild(otherGroup);
-        }
-
-        console.log(`🎛️ Voice selector populated: ${hebrewVoices.length} Hebrew, ${englishVoices.length} English, ${otherVoices.length} Others`);
         updateVoiceInfo();
     }
 }
@@ -396,25 +393,63 @@ function initHebrewVoice() {
 // Update voice info display
 function updateVoiceInfo() {
     const voiceInfo = document.getElementById('voice-info');
-    if (voiceInfo && hebrewVoice) {
-        voiceInfo.innerHTML = `
-            <div style="text-align: right; padding: 10px; background: #f0f0f0; border-radius: 8px;">
-                <div><strong>שם:</strong> ${hebrewVoice.name}</div>
-                <div><strong>שפה:</strong> ${hebrewVoice.lang}</div>
-                <div><strong>סוג:</strong> ${hebrewVoice.localService ? 'מקומי (מהיר)' : 'אונליין (איכותי)'}</div>
-            </div>
-        `;
+    if (voiceInfo) {
+        if (hebrewVoice) {
+            voiceInfo.innerHTML = `
+                <div style="text-align: right; padding: 10px; background: #f0f0f0; border-radius: 8px;">
+                    <div><strong>שם:</strong> ${hebrewVoice.name}</div>
+                    <div><strong>שפה:</strong> ${hebrewVoice.lang}</div>
+                    <div><strong>סוג:</strong> ${hebrewVoice.localService ? 'מקומי (מהיר)' : 'אונליין (איכותי)'}</div>
+                </div>
+            `;
+        } else {
+            voiceInfo.innerHTML = `
+                <div style="text-align: right; padding: 10px; background: #e3f2fd; border-radius: 8px;">
+                    <div><strong>🤖 מצב אוטומטי</strong></div>
+                    <div>הדפדפן יבחר את הקול הטוב ביותר לעברית</div>
+                </div>
+            `;
+        }
     }
 }
 
 // Handle voice selection change
 function onVoiceChange() {
     const voiceSelect = document.getElementById('voice-select');
-    const selectedIndex = parseInt(voiceSelect.value);
-    if (availableVoices[selectedIndex]) {
-        hebrewVoice = availableVoices[selectedIndex];
-        console.log('🔄 Voice changed to:', hebrewVoice.name);
+    const selectedValue = voiceSelect.value;
+
+    console.log(`🔄 Voice selection changed: value="${selectedValue}", total voices=${availableVoices.length}`);
+
+    if (selectedValue === 'auto') {
+        // User selected "Automatic" - let browser choose
+        const oldVoice = hebrewVoice;
+        hebrewVoice = null;
+        console.log(`✅ Voice changed from "${oldVoice?.name}" to "Automatic (browser choice)"`);
         updateVoiceInfo();
+        speakText('הדפדפן יבחר את הקול', speechRate);
+        return;
+    }
+
+    const selectedIndex = parseInt(selectedValue);
+
+    if (selectedIndex === -1) {
+        console.warn('⚠️ No valid voice selected (no Hebrew voices available)');
+        return;
+    }
+
+    if (availableVoices[selectedIndex]) {
+        const oldVoice = hebrewVoice;
+        hebrewVoice = availableVoices[selectedIndex];
+
+        console.log(`✅ Voice changed from "${oldVoice?.name}" to "${hebrewVoice.name}"`);
+        console.log(`   Language: ${hebrewVoice.lang}, Type: ${hebrewVoice.localService ? 'Local' : 'Online'}`);
+
+        updateVoiceInfo();
+
+        // Test the new voice immediately
+        speakText('זהו הקול שבחרת', speechRate);
+    } else {
+        console.error(`❌ Invalid voice index: ${selectedIndex}`);
     }
 }
 
@@ -436,11 +471,10 @@ function reloadVoices() {
 function speakText(text, rate = null) {
     console.log('🔊 speakText called with:', text);
 
-    // Stop any current speech
-    if (speechSynth.speaking || speechSynth.pending) {
-        console.log('⏸️ Stopping current speech...');
-        speechSynth.cancel();
-    }
+    // Detect browser type
+    const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+    const isSafari = /Safari/.test(navigator.userAgent) && /Apple Computer/.test(navigator.vendor);
+    console.log(`🌐 Browser: Chrome=${isChrome}, Safari=${isSafari}`);
 
     // Make sure voices are loaded
     if (availableVoices.length === 0) {
@@ -457,141 +491,69 @@ function speakText(text, rate = null) {
     const finalRate = rate !== null ? rate : speechRate;
     console.log(`⚙️ Speech settings: rate=${finalRate}, voice=${hebrewVoice ? hebrewVoice.name : 'default'}`);
 
-    // Wait a bit after cancel to ensure clean state
-    setTimeout(() => {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'he-IL';
-        utterance.rate = finalRate;
-        utterance.pitch = 1.1;
-        utterance.volume = 1.0;
+    // Create utterance
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'he-IL';
+    utterance.rate = finalRate;
+    utterance.pitch = 1.1;
+    utterance.volume = 1.0;
 
-        // TEMPORARY: Don't set specific voice - let browser choose
-        // This helps debug if the issue is voice-specific or general
-        console.log(`🎤 Available voice: ${hebrewVoice ? hebrewVoice.name : 'NONE'} - NOT setting it, letting browser choose`);
-        // if (hebrewVoice) {
-        //     utterance.voice = hebrewVoice;
-        // }
-
-        let speechStarted = false;
-        let timeoutId = null;
-
-        // Timeout detection: if speech doesn't start in 500ms, try fallback
-        timeoutId = setTimeout(() => {
-            if (!speechStarted) {
-                console.warn('⏱️ Speech timeout - voice not responding, blacklisting and trying fallback...');
-
-                // Blacklist this voice
-                if (hebrewVoice && !failedVoices.includes(hebrewVoice.name)) {
-                    failedVoices.push(hebrewVoice.name);
-                    console.log(`🚫 Blacklisted voice: ${hebrewVoice.name}. Total blacklisted: ${failedVoices.length}`);
-                }
-
-                speechSynth.cancel();
-
-                // Select a new voice
-                const oldVoice = hebrewVoice;
-                hebrewVoice = null;
-                initHebrewVoice();
-
-                setTimeout(() => {
-                    const fallbackUtterance = new SpeechSynthesisUtterance(text);
-                    fallbackUtterance.lang = 'he-IL';
-                    fallbackUtterance.rate = finalRate;
-                    fallbackUtterance.pitch = 1.1;
-                    fallbackUtterance.volume = 1.0;
-
-                    // Use new voice if different from old one
-                    if (hebrewVoice && hebrewVoice.name !== oldVoice?.name) {
-                        fallbackUtterance.voice = hebrewVoice;
-                        console.log(`🔄 Trying new voice: ${hebrewVoice.name}`);
-                    } else {
-                        console.log('🔄 Using browser default (no voice set)');
-                    }
-
-                    fallbackUtterance.onstart = () => console.log('▶️ Fallback speech started');
-                    fallbackUtterance.onend = () => console.log('⏹️ Fallback speech ended');
-                    speechSynth.speak(fallbackUtterance);
-                }, 100);
-            }
-        }, 500); // Reduced to 500ms
-
-        utterance.onstart = () => {
-            speechStarted = true;
-            if (timeoutId) clearTimeout(timeoutId);
-            console.log('▶️ Speech started');
-        };
-
-        utterance.onend = () => {
-            if (timeoutId) clearTimeout(timeoutId);
-            console.log('⏹️ Speech ended');
-        };
-
-        utterance.onerror = (e) => {
-            if (timeoutId) clearTimeout(timeoutId);
-            console.error('❌ Speech error details:', {
-                error: e.error,
-                charIndex: e.charIndex,
-                elapsedTime: e.elapsedTime,
-                name: e.name,
-                type: e.type,
-                voiceName: hebrewVoice?.name
-            });
-
-            // Only retry for canceled/interrupted errors if speech never started
-            if (hebrewVoice && (e.error === 'canceled' || e.error === 'interrupted') && !speechStarted) {
-                console.log('🔄 Voice failed to start, blacklisting and retrying...');
-
-                // Blacklist this voice
-                if (!failedVoices.includes(hebrewVoice.name)) {
-                    failedVoices.push(hebrewVoice.name);
-                    console.log(`🚫 Blacklisted voice: ${hebrewVoice.name}. Total blacklisted: ${failedVoices.length}`);
-                }
-
-                speechSynth.cancel(); // Clear queue first
-
-                // Select a new voice
-                const oldVoice = hebrewVoice;
-                hebrewVoice = null;
-                initHebrewVoice();
-
-                setTimeout(() => {
-                    const fallbackUtterance = new SpeechSynthesisUtterance(text);
-                    fallbackUtterance.lang = 'he-IL';
-                    fallbackUtterance.rate = finalRate;
-                    fallbackUtterance.pitch = 1.1;
-                    fallbackUtterance.volume = 1.0;
-
-                    // Use new voice if different from old one
-                    if (hebrewVoice && hebrewVoice.name !== oldVoice?.name) {
-                        fallbackUtterance.voice = hebrewVoice;
-                        console.log(`🔄 Trying new voice: ${hebrewVoice.name}`);
-                    } else {
-                        console.log('🔄 Using browser default (no voice set)');
-                    }
-
-                    fallbackUtterance.onstart = () => console.log('▶️ Fallback speech started');
-                    fallbackUtterance.onend = () => console.log('⏹️ Fallback speech ended');
-                    speechSynth.speak(fallbackUtterance);
-                }, 100);
-            }
-        };
-
-        console.log('📢 Calling speechSynth.speak()');
-
-        // Resume synthesis in case it's paused (some browsers need this)
-        if (speechSynth.paused) {
-            console.log('🔓 Synthesis was paused, resuming...');
-            speechSynth.resume();
+    // Set voice for all browsers - respect user's choice
+    // CHROME WORKAROUND: Don't set voice if it's not working
+    // Some voices (like Carmit) are added to queue but never speak in Chrome
+    if (hebrewVoice) {
+        if (isChrome) {
+            // Chrome: Try setting the voice, but log if it might not work
+            utterance.voice = hebrewVoice;
+            console.log(`🎤 Chrome: Trying voice "${hebrewVoice.name}" (${hebrewVoice.lang})`);
+            console.log(`⚠️ If you don't hear anything, this voice may not work in Chrome.`);
+            console.log(`   Try: Don't set a specific voice, or use a different voice`);
+        } else {
+            utterance.voice = hebrewVoice;
+            console.log(`🎤 Using selected voice: ${hebrewVoice.name} (${hebrewVoice.lang})`);
         }
+    } else {
+        console.log(`🎤 No voice selected - using browser default for lang='he-IL'`);
+    }
 
-        try {
-            speechSynth.speak(utterance);
-            console.log('✅ speechSynth.speak() called successfully');
-        } catch (err) {
-            if (timeoutId) clearTimeout(timeoutId);
-            console.error('💥 Exception in speechSynth.speak():', err);
+    // Simple event handlers - no automatic voice switching
+    utterance.onstart = () => {
+        console.log('▶️ Speech started successfully');
+    };
+
+    utterance.onend = () => {
+        console.log('⏹️ Speech ended');
+    };
+
+    utterance.onerror = (e) => {
+        console.error('❌ Speech error:', {
+            error: e.error,
+            voiceName: hebrewVoice?.name,
+            text: text.substring(0, 50)
+        });
+
+        // Just log the error - don't change the user's voice selection
+        if (e.error === 'not-allowed') {
+            console.warn('⚠️ Speech not allowed - user interaction may be required');
         }
-    }, 100); // 100ms delay after cancel
+    };
+
+    // Speak the utterance
+    console.log('📢 Calling speechSynth.speak()');
+    console.log(`   Speaking: ${speechSynth.speaking}, Pending: ${speechSynth.pending}, Paused: ${speechSynth.paused}`);
+
+    // Chrome fix: Resume if paused (Chrome sometimes starts in paused state)
+    if (speechSynth.paused) {
+        console.log('🔓 Speech was paused, resuming...');
+        speechSynth.resume();
+    }
+
+    try {
+        speechSynth.speak(utterance);
+        console.log('✅ speechSynth.speak() called successfully');
+    } catch (err) {
+        console.error('💥 Exception in speechSynth.speak():', err);
+    }
 }
 
 // Create speaker button that reads text when clicked
@@ -738,13 +700,14 @@ function openSettings() {
     rateSlider.oninput = function() {
         speechRate = parseFloat(this.value);
         rateValue.textContent = speechRate;
+        console.log(`⚙️ Speech rate changed to: ${speechRate}`);
     };
 
-    // Add listener for voice selection
-    const voiceSelect = document.getElementById('voice-select');
-    voiceSelect.onchange = function() {
-        hebrewVoice = availableVoices[this.value];
-    };
+    // Ensure voice selector is populated and up to date
+    if (availableVoices.length === 0) {
+        console.log('⚠️ Voices not loaded yet, loading now...');
+        initHebrewVoice();
+    }
 }
 
 // Close settings modal
