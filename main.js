@@ -469,18 +469,28 @@ function initHebrewVoice() {
             console.log('✅ Selected Hebrew voice:', hebrewVoice ? `${hebrewVoice.name} (${hebrewVoice.lang}, ${hebrewVoice.localService ? 'Local' : 'Online'})` : 'NONE');
         }
 
-        // Initialize English voice if not set
+        // Initialize English voice if not set - prefer male voices
         if (!englishVoice) {
             const englishVoices = availableVoices.filter(voice => voice.lang.startsWith('en'));
             console.log(`🇺🇸 English voices available:`, englishVoices.map(v => `${v.name} (${v.localService ? 'Local' : 'Online'})`));
+
+            // Try to find male voices (common male voice names in various systems)
+            const maleVoiceKeywords = ['david', 'male', 'man', 'james', 'daniel', 'mark', 'aaron', 'rishi', 'eddy'];
+            const maleEnglishVoices = englishVoices.filter(voice =>
+                maleVoiceKeywords.some(keyword => voice.name.toLowerCase().includes(keyword))
+            );
+
+            // Prefer local male voice, then any male voice, then any local English, then any English
+            const localMaleVoice = maleEnglishVoices.find(v => v.localService);
             const localEnglishVoice = englishVoices.find(v => v.localService);
 
-            // Priority: local English > any English > first available voice
-            englishVoice = localEnglishVoice ||
+            englishVoice = localMaleVoice ||
+                          maleEnglishVoices[0] ||
+                          localEnglishVoice ||
                           englishVoices[0] ||
                           availableVoices[0];
 
-            console.log('✅ Selected English voice:', englishVoice ? `${englishVoice.name} (${englishVoice.lang}, ${englishVoice.localService ? 'Local' : 'Online'})` : 'NONE');
+            console.log('✅ Selected English voice:', englishVoice ? `${englishVoice.name} (${englishVoice.lang}, ${englishVoice.localService ? 'Local' : 'Online'}, ${maleEnglishVoices.includes(englishVoice) ? 'Male' : 'Auto'})` : 'NONE');
         }
     } else {
         console.warn('⚠️ No voices available yet');
@@ -915,20 +925,23 @@ function speakInLanguage(text, language) {
     }
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = speechRate;
-    utterance.pitch = 1.1;
     utterance.volume = 1.0;
 
     if (language === 'hebrew') {
         utterance.lang = 'he-IL';
+        utterance.rate = speechRate; // Use user-configured rate for Hebrew
+        utterance.pitch = 1.1;
         if (hebrewVoice) {
             utterance.voice = hebrewVoice;
         }
     } else if (language === 'english') {
         utterance.lang = 'en-US';
+        utterance.rate = 0.85; // Slower rate for clearer English pronunciation
+        utterance.pitch = 0.9; // Lower pitch for more masculine voice
         if (englishVoice) {
             utterance.voice = englishVoice;
         }
+        console.log(`🎙️ English speech: rate=0.85 (clear), pitch=0.9 (masculine), voice=${englishVoice?.name || 'default'}`);
     }
 
     utterance.onstart = () => console.log(`▶️ Speech started: ${text}`);
