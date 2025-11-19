@@ -124,8 +124,18 @@ function startMemoryWithSize(size) {
         emoji.style.cssText = 'font-size: 2.5em;';
 
         const wordText = document.createElement('div');
-        wordText.textContent = word;
-        wordText.style.cssText = 'font-size: 1.3em; font-weight: bold;';
+
+        // Display word based on current language
+        if (currentLanguage === 'hebrew') {
+            wordText.textContent = word;
+        } else if (currentLanguage === 'english') {
+            wordText.textContent = hebrewToEnglish[word] || word;
+        } else { // bilingual
+            const englishWord = hebrewToEnglish[word] || '';
+            wordText.innerHTML = englishWord ? `${word}<br><span style="font-size: 0.85em; color: #555;">${englishWord}</span>` : word;
+        }
+
+        wordText.style.cssText = 'font-size: 1.3em; font-weight: bold; text-align: center;';
 
         cardFront.appendChild(emoji);
         cardFront.appendChild(wordText);
@@ -150,8 +160,18 @@ function flipCard(card) {
     cardBack.style.display = 'none';
     cardFront.style.display = 'flex';
 
-    // Speak the word
-    speakText(card.dataset.word);
+    // Speak the word based on language mode
+    const hebrewWord = card.dataset.word;
+    const englishWord = hebrewToEnglish[hebrewWord];
+
+    if (currentLanguage === 'hebrew') {
+        speakInLanguage(hebrewWord, 'hebrew');
+    } else if (currentLanguage === 'english') {
+        speakInLanguage(englishWord || hebrewWord, 'english');
+    } else { // bilingual - speak both languages
+        speakInLanguage(hebrewWord, 'hebrew');
+        setTimeout(() => speakInLanguage(englishWord || hebrewWord, 'english'), 1200);
+    }
 
     flippedCards.push(card);
 

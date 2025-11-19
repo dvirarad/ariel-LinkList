@@ -481,9 +481,34 @@ header {
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
-.fun-button {
+.language-button {
     position: fixed;
     top: 90px;
+    right: 20px;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    border: none;
+    font-size: 0.9em;
+    padding: 10px 15px;
+    width: auto;
+    height: 60px;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    z-index: 100;
+    color: white;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.language-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4);
+}
+
+.fun-button {
+    position: fixed;
+    top: 160px;
     right: 20px;
     background: linear-gradient(135deg, #ffd93d 0%, #ff9a9e 100%);
     border: none;
