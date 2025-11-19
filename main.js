@@ -7,9 +7,13 @@ let score = 0;
 let stars = 0;
 let currentGameCleanup = null;
 
-// Audio system for Hebrew speech
+// Language settings
+let currentLanguage = 'hebrew'; // 'hebrew', 'english', 'bilingual'
+
+// Audio system for speech
 let speechSynth = null;
 let hebrewVoice = null;
+let englishVoice = null;
 let speechRate = 0.75; // Default speech rate (can be adjusted in settings)
 let availableVoices = [];
 
@@ -160,6 +164,114 @@ const wordImages = {
     'אווז': '🦆',
     'ינשוף': '🦉',
     'יונה': '🕊️'
+};
+
+// Hebrew to English translation dictionary
+const hebrewToEnglish = {
+    // משפחה ובני אדם
+    'אבא': 'dad',
+    'אמא': 'mom',
+    'ילד': 'boy',
+    'ילדה': 'girl',
+    // בעלי חיים ביתיים
+    'כלב': 'dog',
+    'חתול': 'cat',
+    'דג': 'fish',
+    'ציפור': 'bird',
+    'ארנב': 'rabbit',
+    'סוס': 'horse',
+    // בעלי חיים פראיים
+    'אריה': 'lion',
+    'פיל': 'elephant',
+    'קוף': 'monkey',
+    'ג׳ירפה': 'giraffe',
+    'זברה': 'zebra',
+    'דוב': 'bear',
+    'פנדה': 'panda',
+    'שועל': 'fox',
+    'דולפין': 'dolphin',
+    'לוויתן': 'whale',
+    'צב': 'turtle',
+    'צפרדע': 'frog',
+    'נחש': 'snake',
+    'תנין': 'crocodile',
+    // חרקים
+    'פרפר': 'butterfly',
+    'דבורה': 'bee',
+    'נמלה': 'ant',
+    // עופות
+    'תרנגול': 'rooster',
+    'אווז': 'goose',
+    'ינשוף': 'owl',
+    'יונה': 'dove',
+    // אוכל
+    'לחם': 'bread',
+    'חלב': 'milk',
+    'גבינה': 'cheese',
+    'ביצה': 'egg',
+    'תפוח': 'apple',
+    'בננה': 'banana',
+    'עוגה': 'cake',
+    'עוגיה': 'cookie',
+    'שוקולד': 'chocolate',
+    'גלידה': 'ice cream',
+    'פיצה': 'pizza',
+    // כלים
+    'כוס': 'cup',
+    'צלחת': 'plate',
+    'כפית': 'spoon',
+    'מזלג': 'fork',
+    // בית ורהיטים
+    'בית': 'house',
+    'דלת': 'door',
+    'חלון': 'window',
+    'מיטה': 'bed',
+    'שולחן': 'table',
+    'כיסא': 'chair',
+    // בגדים
+    'חולצה': 'shirt',
+    'מכנסיים': 'pants',
+    'נעליים': 'shoes',
+    'כובע': 'hat',
+    'משקפיים': 'glasses',
+    // ציוד לימודי
+    'ספר': 'book',
+    'עט': 'pen',
+    'עיפרון': 'pencil',
+    'תיק': 'bag',
+    // משחקים וספורט
+    'כדור': 'ball',
+    'בלון': 'balloon',
+    // טבע
+    'פרח': 'flower',
+    'עץ': 'tree',
+    'שמש': 'sun',
+    'ירח': 'moon',
+    'כוכב': 'star',
+    'עננים': 'clouds',
+    'גשם': 'rain',
+    'קשת': 'rainbow',
+    'ים': 'sea',
+    'הר': 'mountain',
+    'דשא': 'grass',
+    // כלי נגינה
+    'גיטרה': 'guitar',
+    'תוף': 'drum',
+    // כלי תחבורה
+    'מכונית': 'car',
+    'טרקטור': 'tractor',
+    'רכבת': 'train',
+    'מטוס': 'airplane',
+    // מכשירים
+    'טלפון': 'phone',
+    'מחשב': 'computer',
+    'שעון': 'clock',
+    'מצלמה': 'camera',
+    // שונות
+    'לב': 'heart',
+    'אש': 'fire',
+    'מים': 'water',
+    'נר': 'candle'
 };
 
 // Initialize the app
@@ -324,7 +436,7 @@ function getRandomItems(array, count) {
 
 // ===== AUDIO SYSTEM =====
 
-// Initialize Hebrew voice and load all available voices
+// Initialize Hebrew and English voices and load all available voices
 function initHebrewVoice() {
     console.log('🎤 initHebrewVoice called');
 
@@ -342,19 +454,35 @@ function initHebrewVoice() {
         return;
     }
 
-    if (availableVoices.length > 0 && !hebrewVoice) {
-        // Prefer local Hebrew voices (most reliable and responsive)
-        const hebrewVoices = availableVoices.filter(voice => voice.lang.startsWith('he'));
-        console.log(`🇮🇱 Hebrew voices available:`, hebrewVoices.map(v => `${v.name} (${v.localService ? 'Local' : 'Online'})`));
-        const localHebrewVoice = hebrewVoices.find(v => v.localService);
+    if (availableVoices.length > 0) {
+        // Initialize Hebrew voice if not set
+        if (!hebrewVoice) {
+            const hebrewVoices = availableVoices.filter(voice => voice.lang.startsWith('he'));
+            console.log(`🇮🇱 Hebrew voices available:`, hebrewVoices.map(v => `${v.name} (${v.localService ? 'Local' : 'Online'})`));
+            const localHebrewVoice = hebrewVoices.find(v => v.localService);
 
-        // Priority: local Hebrew > any Hebrew > first available voice
-        hebrewVoice = localHebrewVoice ||
-                      hebrewVoices[0] ||
-                      availableVoices[0];
+            // Priority: local Hebrew > any Hebrew > first available voice
+            hebrewVoice = localHebrewVoice ||
+                          hebrewVoices[0] ||
+                          availableVoices[0];
 
-        console.log('✅ Selected voice:', hebrewVoice ? `${hebrewVoice.name} (${hebrewVoice.lang}, ${hebrewVoice.localService ? 'Local' : 'Online'})` : 'NONE');
-    } else if (!hebrewVoice) {
+            console.log('✅ Selected Hebrew voice:', hebrewVoice ? `${hebrewVoice.name} (${hebrewVoice.lang}, ${hebrewVoice.localService ? 'Local' : 'Online'})` : 'NONE');
+        }
+
+        // Initialize English voice if not set
+        if (!englishVoice) {
+            const englishVoices = availableVoices.filter(voice => voice.lang.startsWith('en'));
+            console.log(`🇺🇸 English voices available:`, englishVoices.map(v => `${v.name} (${v.localService ? 'Local' : 'Online'})`));
+            const localEnglishVoice = englishVoices.find(v => v.localService);
+
+            // Priority: local English > any English > first available voice
+            englishVoice = localEnglishVoice ||
+                          englishVoices[0] ||
+                          availableVoices[0];
+
+            console.log('✅ Selected English voice:', englishVoice ? `${englishVoice.name} (${englishVoice.lang}, ${englishVoice.localService ? 'Local' : 'Online'})` : 'NONE');
+        }
+    } else {
         console.warn('⚠️ No voices available yet');
     }
 
@@ -741,6 +869,89 @@ function playRandomGreeting() {
 
     // Speak the message
     speakText(message, 0.7);
+}
+
+// ===== LANGUAGE FUNCTIONS =====
+
+// Toggle between languages
+function toggleLanguage() {
+    const languageButton = document.getElementById('language-button');
+
+    if (currentLanguage === 'hebrew') {
+        currentLanguage = 'english';
+        languageButton.textContent = '🇺🇸 English';
+        languageButton.style.animation = 'pulse 0.5s';
+    } else if (currentLanguage === 'english') {
+        currentLanguage = 'bilingual';
+        languageButton.textContent = '🌍 דו-לשוני';
+        languageButton.style.animation = 'pulse 0.5s';
+    } else {
+        currentLanguage = 'hebrew';
+        languageButton.textContent = '🇮🇱 עברית';
+        languageButton.style.animation = 'pulse 0.5s';
+    }
+
+    setTimeout(() => languageButton.style.animation = '', 500);
+    console.log('🌐 Language changed to:', currentLanguage);
+
+    // Speak a greeting in the new language
+    if (currentLanguage === 'hebrew') {
+        speakInLanguage('שלום נבו!', 'hebrew');
+    } else if (currentLanguage === 'english') {
+        speakInLanguage('Hello Nevo!', 'english');
+    } else {
+        speakInLanguage('שלום נבו!', 'hebrew');
+        setTimeout(() => speakInLanguage('Hello Nevo!', 'english'), 1200);
+    }
+}
+
+// Speak text in a specific language
+function speakInLanguage(text, language) {
+    console.log(`🔊 speakInLanguage called: "${text}" in ${language}`);
+
+    if (!speechSynth) {
+        console.warn('⚠️ Speech synthesis not available');
+        return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = speechRate;
+    utterance.pitch = 1.1;
+    utterance.volume = 1.0;
+
+    if (language === 'hebrew') {
+        utterance.lang = 'he-IL';
+        if (hebrewVoice) {
+            utterance.voice = hebrewVoice;
+        }
+    } else if (language === 'english') {
+        utterance.lang = 'en-US';
+        if (englishVoice) {
+            utterance.voice = englishVoice;
+        }
+    }
+
+    utterance.onstart = () => console.log(`▶️ Speech started: ${text}`);
+    utterance.onend = () => console.log(`⏹️ Speech ended: ${text}`);
+    utterance.onerror = (e) => console.error('❌ Speech error:', e.error);
+
+    if (speechSynth.paused) {
+        speechSynth.resume();
+    }
+
+    speechSynth.speak(utterance);
+}
+
+// Get word in current language
+function getWordInLanguage(hebrewWord) {
+    if (currentLanguage === 'hebrew') {
+        return hebrewWord;
+    } else if (currentLanguage === 'english') {
+        return hebrewToEnglish[hebrewWord] || hebrewWord;
+    } else { // bilingual
+        const englishWord = hebrewToEnglish[hebrewWord] || '';
+        return englishWord ? `${hebrewWord}\n${englishWord}` : hebrewWord;
+    }
 }
 
 // ===== SETTINGS FUNCTIONS =====
